@@ -2,7 +2,7 @@
 
 # List the ts_backups
 
-source /usr/local/lib/ts_shared
+source /usr/local/lib/ts_shared.sh
 
 show_syntax() {
   echo "List all snapshots created by ts_backup."

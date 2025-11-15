@@ -2,7 +2,7 @@
 
 # Restore a ts_backup
 
-source /usr/local/lib/ts_shared
+source /usr/local/lib/ts_shared.sh
 
 show_syntax() {
   echo "Restore a snapshot created with ts_backup; emulates TimeShift."
