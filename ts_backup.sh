@@ -63,14 +63,14 @@ create_snapshot() {
     show "Creating incremental snapshot on '$device'..."
     type="incr"
     # Snapshots exist so create incremental snapshot referencing the latest
-    echo "rsync -aAX $dry $perm --delete --link-dest=\"$g_backuppath/$g_backupdir/$latest\" $excludearg / \"$path/$name/\"" &>> "$g_logfile"
-    sudo rsync -aAX $dry $perm --delete --link-dest="$g_backuppath/$g_backupdir/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
+    echo "rsync -aAX $dry $perm --verbose --delete --link-dest=\"$g_backuppath/$g_backupdir/$latest\" $excludearg / \"$path/$name/\"" &>> "$g_logfile"
+    sudo rsync -aAX $dry $perm --verbose --delete --link-dest="$g_backuppath/$g_backupdir/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
   else
     show "Creating full snapshot on '$device'..."
     type="full"
     # This is the first snapshot so create full snapshot
-    echo "rsync -aAX $dry $perm --delete $excludearg / \"$path/$name/\"" &>> "$g_logfile"
-    sudo rsync -aAX $dry $perm --delete $excludearg / "$path/$name/" &>> "$g_logfile"
+    echo "rsync -aAX $dry $perm --verbose --delete $excludearg / \"$path/$name/\"" &>> "$g_logfile"
+    sudo rsync -aAX $dry $perm --verbose --delete $excludearg / "$path/$name/" &>> "$g_logfile"
   fi
 
   if [ -z $dry ]; then
@@ -163,7 +163,7 @@ if [ $# -ge 1 ]; then
   shift 1
   device="${arg#/dev/}" # in case it is a device designator
   backupdevice="/dev/$(lsblk -ln -o NAME,UUID,PARTUUID,LABEL | grep "$device" | tr -s ' ' | cut -d ' ' -f1)"
-  if [ -z $backupdevice ]; then
+  if [ ! -b $backupdevice ]; then
     printx "No valid device was found for '$device'."
     exit
   fi
