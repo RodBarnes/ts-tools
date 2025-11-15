@@ -281,10 +281,6 @@ else
   show_syntax
 fi
 
-if [ -z $backupdevice ] || [ -z $restoredevice ]; then
-  show_syntax
-fi
-
 # echo "Backup device:$backupdevice"
 # echo "Restore device:$restoredevice"
 # echo "Dry-run:$dryrun"

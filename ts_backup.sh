@@ -171,9 +171,6 @@ else
   show_syntax
 fi
 
-if [ -z $backupdevice ]; then
-  show_syntax
-fi
 
 # show "g_backuppath=$g_backuppath"
 # show "g_backupdir=$g_backupdir"

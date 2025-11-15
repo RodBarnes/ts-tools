@@ -45,10 +45,6 @@ else
   show_syntax
 fi
 
-if [ -z $backupdevice ]; then
-  show_syntax
-fi
-
 if [[ "$EUID" != 0 ]]; then
   printx "This must be run as sudo.\n"
   exit 1
