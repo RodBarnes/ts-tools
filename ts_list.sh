@@ -29,7 +29,7 @@ list_snapshots() {
     fi
     show "$name: $note"
     ((i++))
-  done < <( ls -1 "$path" )
+  done < <( ls -1 "$path" | sort )
 
   if [ $i -eq 0 ]; then
     showx "There are no backups on $device"
