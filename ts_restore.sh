@@ -221,9 +221,9 @@ dryrun_snapshot() {
 # ------- MAIN -------
 # --------------------
 
-restorepath="/mnt/restore"
-
 trap 'unmount_device_at_path "$g_backuppath"; unmount_device_at_path "$restorepath"' EXIT
+
+restorepath="/mnt/restore"
 
 # Get the arguments
 arg_short=dg:s:
@@ -281,20 +281,17 @@ else
   show_syntax
 fi
 
-# echo "Backup device:$backupdevice"
-# echo "Restore device:$restoredevice"
-# echo "Dry-run:$dryrun"
-# echo "Boot device:$bootdevice"
-# echo "Snapshot:$snapshotname"
+# echo "backupdevice:$backupdevice"
+# echo "restoredevice:$restoredevice"
+# echo "dryrun:$dryrun"
+# echo "bootdevice:$bootdevice"
+# echo "snapshotname:$snapshotname"
 # exit
 
 if [[ "$EUID" != 0 ]]; then
   printx "This must be run as sudo.\n"
   exit 1
 fi
-
-# Initialize the log file
-echo -n &> "$g_logfile"
 
 mount_device_at_path "$restoredevice" "$restorepath"
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
@@ -308,6 +305,10 @@ fi
 if [ -z $snapshotname ]; then
   snapshotname=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
 fi
+
+# Initialize the log file
+g_logfile="/tmp/$(basename $0)_$snapshotname.log"
+echo -n &> "$g_logfile"
 
 if [ ! -z $snapshotname ]; then
   if [ -z $dryrun ]; then

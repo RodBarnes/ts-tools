@@ -122,9 +122,6 @@ check_rsync_perm() {
 # ------- MAIN -------
 # --------------------
 
-snapshotname=$g_timestamp
-minimum_space=5 # Amount in GB
-
 trap 'unmount_device_at_path "$g_backuppath"' EXIT
 
 # Get the arguments
@@ -171,13 +168,9 @@ else
   show_syntax
 fi
 
-
 # show "g_backuppath=$g_backuppath"
 # show "g_backupdir=$g_backupdir"
-# show "g_logfile=$g_logfile"
 # show "backupdevice=$backupdevice"
-# show "snapshotname=$snapshotname"
-# show "minimum_space=$minimum_space"
 # show "dryrun=$dryrun"
 # show "comment=$comment"
 # exit
@@ -188,10 +181,15 @@ if [[ "$EUID" != 0 ]]; then
   exit 1
 fi
 
+minimum_space=5 # Amount in GB
+snapshotname=$(date +%Y%m%d_%H%M%S)
+
 # Initialize the log file
+g_logfile="/tmp/$(basename $0)_$snapshotname.log"
 echo -n &> "$g_logfile"
 
 mount_device_at_path  "$backupdevice" "$g_backuppath" "$g_backupdir"
+
 verify_available_space "$backupdevice" "$g_backuppath" "$minimum_space"
 perm_opt=$(check_rsync_perm "$g_backuppath")
 create_snapshot "$backupdevice" "$g_backuppath/$g_backupdir" "$snapshotname" "$comment" "$dryrun" "$perm_opt"
