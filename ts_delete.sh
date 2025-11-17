@@ -14,15 +14,28 @@ show_syntax() {
 
 delete_snapshot() {
   local path=$1 name=$2
+  local snapshot_dir="$path/$name"
+  local guid=$(cat /proc/sys/kernel/random/uuid)
+  local empty_dir=$(mktemp -d /tmp/empty.$guid)
 
-  showx "This will completely DELETE the snapshot '$name' and is not recoverable."
+  showx "This will completely and IRREVERSIBLY DELETE the snapshot '$name'."
+  showx "All other remaining snapshots will stay fully intact and restorable."
   readx "Are you sure you want to proceed? (y/N)" yn
   if [[ $yn != "y" && $yn != "Y" ]]; then
-    show "Operation cancelled."
+    showx "Operation cancelled."
   else
-    show "Deleting '$name'."
-    sudo rm -Rf $path/$name
+    show "Safely deleting snapshot '$name' (this may take a while)..."
+
+    # Use rsync to delete the snapshot and preserve remaining hard links
+    rsync -a --delete --quiet "$empty_dir/" "$snapshot_dir/"
+
+    # Now remove the now-empty directory itself
+    rmdir "$snapshot_dir" 2>/dev/null || rm -rf "$snapshot_dir"
+
+    show "Snapshot '$name' deleted safely."
   fi
+
+  rm -rf "$empty_dir"
 }
 
 # --------------------
