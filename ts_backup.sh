@@ -156,7 +156,7 @@ while true; do
 done
 
 if [ $# -ge 1 ]; then
-  backupdevice="/dev/$(lsblk -ln -o NAME,UUID,PARTUUID,LABEL | grep "${1#/dev/}" | tr -s ' ' | cut -d ' ' -f1)"
+  backupdevice=$(get_device "$1")
 else
   show_syntax
 fi

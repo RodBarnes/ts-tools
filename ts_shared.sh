@@ -18,6 +18,10 @@ verify_sudo() {
   fi
 }
 
+get_device() {
+  echo "/dev/$(lsblk -ln -o NAME,UUID,PARTUUID,LABEL | grep "${1#/dev/}" | tr -s ' ' | cut -d ' ' -f1)"
+}
+
 select_snapshot() {
   local device=$1 path=$2
 
