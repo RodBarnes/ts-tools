@@ -8,3 +8,8 @@ sudo chmod +x ts_*.sh
 for file in ts_*.sh; do
 	sudo mv "$file" "/usr/local/bin/${file%.sh}"
 done
+
+
+sudo bash ts-sha256.sh
+rm ts-sha256.sh
+rm ts-move.sh
