@@ -1,0 +1,5 @@
+e0fe26bdaf28a1f286a241542e8b1352e51f1d5ee4257ebf8d1e1d4d56a0dd12  /usr/local/lib/ts_shared.sh
+2f6d23dc33a891f72788312677f5559eaaf1baca2489ffd9d090d7bb5a309ffc  /usr/local/bin/ts_backup
+d629f6bc2d551087b7ea148e9474021411e8b4616e5f6ccdea4a202e83b3a620  /usr/local/bin/ts_delete
+f1fe5f320393862ddb7aee05929148a23da7e24b409866db7ed7bb9c85e4e930  /usr/local/bin/ts_list
+4a4803c763e58c704c0bca0ef493fdba8ceb980f40c71d1175c64ed6d77c2ecc  /usr/local/bin/ts_restore
