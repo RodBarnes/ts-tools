@@ -160,10 +160,6 @@ if [ $# -ge 1 ]; then
   shift 1
   device="${arg#/dev/}" # in case it is a device designator
   backupdevice="/dev/$(lsblk -ln -o NAME,UUID,PARTUUID,LABEL | grep "$device" | tr -s ' ' | cut -d ' ' -f1)"
-  if [ ! -b $backupdevice ]; then
-    printx "No valid device was found for '$device'."
-    exit
-  fi
 else
   show_syntax
 fi
@@ -175,10 +171,11 @@ fi
 # show "comment=$comment"
 # exit
 
-# Confirm running as sudo
-if [[ "$EUID" != 0 ]]; then
-  printx "This must be run as sudo.\n"
-  exit 1
+verify_sudo
+
+if [ ! -b $backupdevice ]; then
+  printx "No valid backup device was found for '$device'."
+  exit
 fi
 
 minimum_space=5 # Amount in GB

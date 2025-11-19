@@ -11,6 +11,13 @@ g_backupdir="ts"
 g_excludesfile="/etc/ts_excludes"
 g_bootfile="grubx64.efi"  # Default for non-secure boot
 
+verify_sudo() {
+  if [[ "$EUID" != 0 ]]; then
+    showx "This must be run as sudo.\n"
+    exit 1
+  fi
+}
+
 select_snapshot() {
   local device=$1 path=$2
 
