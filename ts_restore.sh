@@ -266,7 +266,7 @@ if [ $# -ge 2 ]; then
   device="${arg#/dev/}" # in case it is a device designator
   backupdevice="/dev/$(lsblk -ln -o NAME,UUID,PARTUUID,LABEL | grep "$device" | tr -s ' ' | cut -d ' ' -f1)"
   if [ ! -b $backupdevice ]; then
-    printx "No valid device was found for '$device'."
+    printx "No valid backup device was found for '$device'."
     exit
   fi
   arg="$1"
@@ -274,7 +274,7 @@ if [ $# -ge 2 ]; then
   device="${arg#/dev/}" # in case it is a device designator
   restoredevice="/dev/$(lsblk -ln -o NAME,UUID,PARTUUID,LABEL | grep "$device" | tr -s ' ' | cut -d ' ' -f1)"
   if [ ! -b $restoredevice ]; then
-    printx "No valid device was found for '$restoredevice'."
+    printx "No valid restore device was found for '$restoredevice'."
     exit
   fi
 else
