@@ -176,7 +176,7 @@ if [ ! -b $backupdevice ]; then
 fi
 
 minimum_space=5 # Amount in GB
-snapshotname=$(date +%Y%m%d_%H%M%S)
+snapshotname="$(date +%Y%m%d_%H%M%S)_$(hostname -s)"
 
 # Initialize the log file
 g_logfile="/tmp/$(basename $0)_$snapshotname.log"
