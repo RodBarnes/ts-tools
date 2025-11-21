@@ -2,7 +2,7 @@
 
 # Create a snapshot using rsync command as done by TimeShift.
 
-source /usr/local/lib/ts_shared.sh
+source /usr/local/lib/ts-shared.sh
 
 show_syntax() {
   echo "Create a TimeShift-like snapshot of the system file excluding those identified in /etc/backup-excludes."

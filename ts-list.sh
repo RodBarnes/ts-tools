@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# List the ts_backups
+# List the ts-backups
 
-source /usr/local/lib/ts_shared.sh
+source /usr/local/lib/ts-shared.sh
 
 show_syntax() {
-  echo "List all snapshots created by ts_backup."
+  echo "List all snapshots created by ts-backup."
   echo "Syntax: $(basename $0) <backup_device>"
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "NOTE:   Must be run as sudo."

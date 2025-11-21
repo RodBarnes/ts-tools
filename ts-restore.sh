@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# Restore a ts_backup
+# Restore a ts-backup
 
-source /usr/local/lib/ts_shared.sh
+source /usr/local/lib/ts-shared.sh
 
 show_syntax() {
-  echo "Restore a snapshot created with ts_backup; emulates TimeShift."
+  echo "Restore a snapshot created with ts-backup; emulates TimeShift."
   echo "Syntax: $(basename $0) <backup_device> <restore_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshotname]"
   echo "Where:  <backup_device> and <restore_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually creating the backup."
@@ -168,15 +168,14 @@ build_boot() {
 restore_snapshot() {
   local backpath=$1 name=$2 restpath=$3
 
-  local excludespathname="/etc/ts_excludes"
+  local excludespathname="/etc/ts-excludes"
 
   printx "This will completely OVERWRITE the operating system on '$restoredevice'."
   readx "Are you sure you want to proceed? (y/N) " yn
   if [[ $yn != "y" && $yn != "Y" ]]; then
-    echo "Operation cancelled."
+    show "Operation cancelled."
     exit
   else
-
     if [ -f "$g_excludesfile" ]; then
       excludearg="--exclude-from=$g_excludesfile"
     else
@@ -188,7 +187,7 @@ restore_snapshot() {
       fi
     fi
 
-    echo "Restoring '$snapshotname' to '$restoredevice'..."
+    show "Restoring '$snapshotname' to '$restoredevice'..."
     echo "---${FUNCNAME}---" &>> "$g_logfile"
     # Restore the snapshot
     echo "rsync -aAX --delete --verbose --exclude-from=\"$excludespathname\" \"$backpath/$name/\" \"$restpath/\"" &>> "$g_logfile"
@@ -208,7 +207,7 @@ restore_snapshot() {
 dryrun_snapshot() {
   local backpath=$1 name=$2 restpath=$3
 
-  local excludespathname="/etc/ts_excludes"
+  local excludespathname="/etc/ts-excludes"
 
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 

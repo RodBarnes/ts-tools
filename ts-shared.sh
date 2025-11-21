@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Shared code and variables for ts_tools
+# Shared code and variables for ts-tools
 
 source /usr/local/lib/display.sh
 source /usr/local/lib/device.sh
@@ -8,7 +8,7 @@ source /usr/local/lib/device.sh
 g_descfile=comment.txt
 g_backuppath=/mnt/backup
 g_backupdir="ts"
-g_excludesfile="/etc/ts_excludes"
+g_excludesfile="/etc/ts-excludes"
 g_bootfile="grubx64.efi"  # Default for non-secure boot
 
 verify_sudo() {
