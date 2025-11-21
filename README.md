@@ -30,7 +30,7 @@ Usage: `sudo ts-restore <backup_device> <restore_device> [-d|--dry-run] [-g|--gr
 
 Restores a `ts-backup` snapshot from the `backup_device` to the `restore_device`.
 
-NOTE: As written, `ts-restore` is intended to be used from a server's recovery partition to elmininate discrepancies by running on an active partition.  But it has been tested under both situations and works.  It should also work from a live image but that has not been tested.
+**This is best run from a server's recovery partition or a live image.**  Some inconsistencies may result from an in-place restore to the active partition.  (It has been tested under both situations and works, but...)
 
 ## ts-shared.sh
 Shared functions and variables used by `ts-tools`.  This is accessed by the other programs and is expected to be in `/usr/local/lib`.
