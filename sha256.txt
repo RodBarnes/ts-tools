@@ -1,5 +1,6 @@
-de50c6549a7ae537bc016210311cab79bbf4e519793a12ace5e6314a1702e5b1  /usr/local/lib/ts-shared.sh
-c706533665aae62e7cf8eeed612850b0f29f61865acef20c129c778122314fd4  /usr/local/bin/ts-backup
-7d90908a4ac9f9379d5eb77e356f8602a8acb268a11c9cd0a7c7c6efc957f604  /usr/local/bin/ts-delete
-f36d8c83b33bc2c0c36873d272a1e43c9b5d8e819da132d863438af8ca6641fb  /usr/local/bin/ts-list
-30bc85123a8e7951ed3e8f760155d091e19b3890a86b9c44e249174ad91ee479  /usr/local/bin/ts-restore
+342ab5937f3c9f1ea234f3c80f5290f3250f1dbf210e8bb59da39253131f5f39  /usr/local/lib/ts-shared.sh
+1dd03cfb269a1bc7efebd4e5494a753ba4643c204bd5ea5e74d959395816e6d4  /usr/local/bin/ts-backup
+5cf3296c79bd216bfc6de3dba81bd98a6de7a706631453831387eb659e752ae4  /usr/local/bin/ts-delete
+49b4d0a0bbafff58acec0f1ac337092379d346950b829d8602e0c5a9f131d091  /usr/local/bin/ts-list
+ddd4ef48edf7b29c1ae17d38749bf5700b366033ea88f6cb0a1805c83b6af4c9  /usr/local/bin/ts-restore
+
