@@ -1,5 +1,5 @@
 # ts-tools
-A collection of `bash` scripts that emulate TimeShift backups on headless systems.
+A collection of `bash` scripts that emulate TimeShift backups on headless systems.  These are sysadmin tools and should reside in `/usr/local/sbin`.
 
 This requires `rsync` be installed as well as expecting the `display` and `device` libraries (found in the [tools](https://github.com/RodBarnes/tools) repository) be in `/usr/local/lib`.
 
