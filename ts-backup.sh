@@ -44,7 +44,7 @@ create_snapshot() {
   fi
 
   # Get the name of the most recent backup
-  local latest=$(ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}$' | sort -r | sed -n '1p;')
+  local latest=$(ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}_.+$' | sort -r | sed -n '1p;')
   local type
 
   if [ -f "$g_excludesfile" ]; then
