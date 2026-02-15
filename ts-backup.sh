@@ -59,18 +59,19 @@ create_snapshot() {
   fi
 
   # Create the snapshot
+  [ -n "$dry" ] && dryrun_flag="--dry-run" || dryrun_flag=""
   if [ -n $latest ]; then
     show "Creating incremental snapshot on '$device'..."
     type="incr"
     # Snapshots exist so create incremental snapshot referencing the latest
-    echo "rsync -aAX $dry $perm --verbose --delete --link-dest=\"$g_backuppath/$g_backupdir/$latest\" $excludearg / \"$path/$name/\"" &>> "$g_logfile"
-    sudo rsync -aAX $dry $perm --verbose --delete --link-dest="$g_backuppath/$g_backupdir/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
+    echo "rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest=\"$g_backuppath/$g_backupdir/$latest\" $excludearg / \"$path/$name/\"" &>> "$g_logfile"
+    sudo rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest="$g_backuppath/$g_backupdir/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
   else
     show "Creating full snapshot on '$device'..."
     type="full"
     # This is the first snapshot so create full snapshot
-    echo "rsync -aAX $dry $perm --verbose --delete $excludearg / \"$path/$name/\"" &>> "$g_logfile"
-    sudo rsync -aAX $dry $perm --verbose --delete $excludearg / "$path/$name/" &>> "$g_logfile"
+    echo "rsync -aAX $dryrun_flagy $perm --verbose --delete $excludearg / \"$path/$name/\"" &>> "$g_logfile"
+    sudo rsync -aAX $dryrun_flag $perm --verbose --delete $excludearg / "$path/$name/" &>> "$g_logfile"
   fi
 
   if [ -z $dry ]; then
