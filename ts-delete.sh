@@ -9,7 +9,7 @@ show_syntax() {
   echo "Syntax: $(basename $0) <backup_device>"
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "NOTE:   Must be run as sudo."
-  exit  
+  exit
 }
 
 delete_snapshot() {
@@ -72,7 +72,7 @@ fi
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 while true; do
   snapshotname=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
-  if [ ! -z $snapshotname ]; then
+  if [ -n $snapshotname ]; then
     delete_snapshot "$g_backuppath/$g_backupdir" "$snapshotname"
   else
     exit

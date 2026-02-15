@@ -38,7 +38,7 @@ verify_available_space() {
 create_snapshot() {
   local device=$1 path=$2 name=$3 note=$4 dry=$5 perm=$6
 
-  if [[ ! -z $perm ]]; then
+  if [[ -n $perm ]]; then
     show "The backup device does not support permmissions or ownership."
     show "The rsync will be performed without attempting to set these options."
   fi
@@ -59,7 +59,7 @@ create_snapshot() {
   fi
 
   # Create the snapshot
-  if [ ! -z $latest ]; then
+  if [ -n $latest ]; then
     show "Creating incremental snapshot on '$device'..."
     type="incr"
     # Snapshots exist so create incremental snapshot referencing the latest
@@ -101,7 +101,7 @@ check_rsync_perm() {
       noperm="--no-perms --no-owner"
       ;;
     "ntfs")
-      sudo pgrep -a ntfs-3g | grep "$path" | grep -q "permissions" 
+      sudo pgrep -a ntfs-3g | grep "$path" | grep -q "permissions"
       if [ $? -ne 0 ]; then
           # Permissions not found
           noperm="--no-perms --no-owner"
@@ -111,7 +111,7 @@ check_rsync_perm() {
       ;;
   esac
 
-  if [ ! -z $noperm ]; then
+  if [ -n $noperm ]; then
     echo "Using options '$noperm' to prevent attempt to change ownership or permissions." &>> "$g_logfile"
   fi
 

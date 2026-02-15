@@ -12,7 +12,7 @@ show_syntax() {
   echo "        [-g--grub-install boot_device] means to rebuild grub on the specified device; e.g., /dev/sda1."
   echo "        [-s|--snapshot snapshotname] is the name (timestamp) of the snapshot to restore -- if not present, a selection is presented."
   echo "NOTE:   Must be run as sudo."
-  exit  
+  exit
 }
 
 get_bootfile() {
@@ -126,14 +126,14 @@ build_boot() {
   if [ $? -ne 0 ]; then
     showx "Something went wrong with 'grub-install'.  Check '$g_logfile' for details."
   fi
-  
+
   show "Updating grub on $restdev..."
   # Use chroot to rebuild grub on the restored partion
   sudo chroot "$restpath" update-grub &>> "$g_logfile"
   if [ $? -ne 0 ]; then
     showx "Something went wrong with 'update-grub'.  Check '$g_logfile' for details."
   fi
-  
+
   show "Checking EFI on $bootdevice"
   # Check for an existing boot entry
   sudo efibootmgr | grep -q "$osid" &>> "$g_logfile"
@@ -288,7 +288,7 @@ fi
 mount_device_at_path "$restoredevice" "$restorepath"
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 
-if [ ! -z $snapshotname ] && [ ! -d $g_backuppath/$g_backupdir/$snapshotname ]; then
+if [ -n $snapshotname ] && [ ! -d $g_backuppath/$g_backupdir/$snapshotname ]; then
   printx "There is no snapshot '$snapshotname' on '$backupdevice'."
   unset snapshotname
 fi
@@ -302,7 +302,7 @@ fi
 g_logfile="/tmp/$(basename $0)_$snapshotname.log"
 echo -n &> "$g_logfile"
 
-if [ ! -z $snapshotname ]; then
+if [ -n $snapshotname ]; then
   if [ -z $dryrun ]; then
     restore_snapshot "$g_backuppath/$g_backupdir" "$snapshotname" "$restorepath"
 
@@ -322,7 +322,7 @@ if [ ! -z $snapshotname ]; then
       validate_boot_config "$restoredevice" "$restorepath"
     fi
 
-    if [ ! -z $bootdevice ]; then
+    if [ -n $bootdevice ]; then
       # echo "Before get_build_boot..."
       # echo "restoredevice=$restoredevice"
       # echo "g_bootfile=$g_bootfile"
