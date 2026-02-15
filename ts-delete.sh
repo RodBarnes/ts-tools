@@ -26,9 +26,6 @@ delete_snapshot() {
   else
     show "Safely deleting snapshot '$name' (this may take a while)..."
 
-    # Use rsync to delete the snapshot and preserve remaining hard links
-    # rsync -a --delete --quiet "$empty_dir/" "$snapshot_dir/"
-
     rsync -a --delete --quiet \
           --filter="protect /dev/" \
           --filter="protect /proc/" \
