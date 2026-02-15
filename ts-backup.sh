@@ -101,12 +101,9 @@ check_rsync_perm() {
       show "NOTE: The backup device '$backupdevice' is $fstype."
       noperm="--no-perms --no-owner"
       ;;
-    "ntfs")
-      sudo pgrep -a ntfs-3g | grep "$path" | grep -q "permissions"
-      if [ $? -ne 0 ]; then
-          # Permissions not found
-          noperm="--no-perms --no-owner"
-      fi
+    "ntfs"|"ntfs3")
+      # Permissions not found
+      noperm="--no-perms --no-owner"
       ;;
     *)
       ;;
