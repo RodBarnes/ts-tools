@@ -103,6 +103,8 @@ validate_boot_config() {
 }
 
 build_boot() {
+  trap 'sudo umount "$restpath/boot/efi" "$restpath/dev/pts" "$restpath/dev" "$restpath/proc" "$restpath/sys" 2>/dev/null' RETURN
+
   local restdev=$1 restpath=$2
 
   local osid=$(grep "^ID=" "$restpath/etc/os-release" | cut -d'=' -f2 | tr -d '"')
@@ -118,7 +120,7 @@ build_boot() {
   sudo mount $bootdevice "$restpath/boot/efi"
   if [ $? -ne 0 ]; then
     showx "Unable to mount the EFI System Partition on $bootdevice."
-    exit 2
+    return 2
   fi
   sudo mount --bind /dev "$restpath/dev"
   sudo mount --bind /proc "$restpath/proc"
@@ -129,6 +131,7 @@ build_boot() {
   sudo chroot "$restpath" grub-install --target=x86_64-efi --efi-directory=/boot/efi --boot-directory=/boot &>> "$g_logfile"
   if [ $? -ne 0 ]; then
     showx "Something went wrong with 'grub-install'.  Check '$g_logfile' for details."
+    return 2
   fi
 
   show "Updating grub on $restdev..."
@@ -136,6 +139,7 @@ build_boot() {
   sudo chroot "$restpath" update-grub &>> "$g_logfile"
   if [ $? -ne 0 ]; then
     showx "Something went wrong with 'update-grub'.  Check '$g_logfile' for details."
+    return 2
   fi
 
   show "Checking EFI on $bootdevice"
@@ -148,6 +152,7 @@ build_boot() {
     sudo efibootmgr -c -d $bootdevice -p $partno -L $osid -l "/EFI/$osid/$g_bootfile" &>> "$g_logfile"
     if [ $? -ne 0 ]; then
       showx "Something went wrong with 'efibootmgr'. Check '$g_logfile' for details."
+      return 3
     fi
   else
     echo "Confirmed EFI boot entry for '$osid' exists." &>> "$g_logfile"
@@ -164,9 +169,6 @@ build_boot() {
   else
     echo "Confirmed '$restpath/boot/efi/EFI/BOOT/BOOTX64.EFI' exists for fallback." &>> "$g_logfile"
   fi
-
-  # Unbind the directories
-  sudo umount "$restpath/boot/efi" "$restpath/dev/pts" "$restpath/dev" "$restpath/proc" "$restpath/sys"
 }
 
 restore_snapshot() {
@@ -308,6 +310,11 @@ if [ -n "$snapshotname" ]; then
     if [ -n "$bootdevice" ]; then
       build_boot "$restoredevice" "$restorepath"
       if [ $? -ne 0 ]; then
+        showx "Boot configuration failed. The restored system may not be bootable."
+        showx "Check '$g_logfile' for details."
+        exit 2
+      fi
+    fi
 
     # Done
     echo "✅ Restore complete: $g_backuppath/$g_backupdir/$snapshotname"
