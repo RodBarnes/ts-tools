@@ -65,13 +65,13 @@ create_snapshot() {
     type="incr"
     # Snapshots exist so create incremental snapshot referencing the latest
     echo "rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest=\"$g_backuppath/$g_backupdir/$latest\" $excludearg / \"$path/$name/\"" &>> "$g_logfile"
-    sudo rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest="$g_backuppath/$g_backupdir/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
+    rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest="$g_backuppath/$g_backupdir/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
   else
     show "Creating full snapshot on '$device'..."
     type="full"
     # This is the first snapshot so create full snapshot
     echo "rsync -aAX $dryrun_flagy $perm --verbose --delete $excludearg / \"$path/$name/\"" &>> "$g_logfile"
-    sudo rsync -aAX $dryrun_flag $perm --verbose --delete $excludearg / "$path/$name/" &>> "$g_logfile"
+    rsync -aAX $dryrun_flag $perm --verbose --delete $excludearg / "$path/$name/" &>> "$g_logfile"
   fi
 
   if [ -z "$dry" ]; then
@@ -81,7 +81,7 @@ create_snapshot() {
     fi
 
     # Create comment in the snapshot directory
-    echo "($type $(sudo du -sh $path/$name | awk '{print $1}')) $note" > "$path/$name/$g_descfile"
+    echo "($type $(du -sh $path/$name | awk '{print $1}')) $note" > "$path/$name/$g_descfile"
 
     # Done
     show "The snapshot '$name' was successfully completed."
