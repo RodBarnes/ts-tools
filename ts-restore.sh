@@ -195,9 +195,9 @@ restore_snapshot() {
       exit 3
     fi
 
-    if [ -f "$backpath/$g_descfile" ]; then
+    if [ -f "$restpath/$g_descfile" ]; then
       # Delete the description file from the target
-      sudo rm "$backpath/$g_descfile"
+      sudo rm "$restpath/$g_descfile"
     fi
   fi
 }
