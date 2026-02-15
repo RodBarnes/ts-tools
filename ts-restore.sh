@@ -89,7 +89,7 @@ validate_boot_config() {
     while true; do
       readx "Enter the boot device (or press ENTER to skip):" bootdevice
       if [ -z "$bootdevice" ]; then
-        shows "Skipping GRUB setup. Ensure the EFI boot entry is configured manually."
+        showx "Skipping GRUB setup. Ensure the EFI boot entry is configured manually."
         break
       elif sudo lsblk $bootdevice &> /dev/null; then
         break
