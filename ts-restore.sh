@@ -168,8 +168,6 @@ build_boot() {
 restore_snapshot() {
   local backpath=$1 name=$2 restpath=$3
 
-  local excludespathname="/etc/ts-excludes"
-
   printx "This will completely OVERWRITE the operating system on '$restoredevice'."
   readx "Are you sure you want to proceed? (y/N) " yn
   if [[ $yn != "y" && $yn != "Y" ]]; then
@@ -190,8 +188,8 @@ restore_snapshot() {
     show "Restoring '$snapshotname' to '$restoredevice'..."
     echo "---${FUNCNAME}---" &>> "$g_logfile"
     # Restore the snapshot
-    echo "rsync -aAX --delete --verbose --exclude-from=\"$excludespathname\" \"$backpath/$name/\" \"$restpath/\"" &>> "$g_logfile"
-    sudo rsync -aAX --delete --verbose --exclude-from="$excludespathname" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
+    echo "rsync -aAX --delete --verbose --exclude-from=\"$g_excludesfile\" \"$backpath/$name/\" \"$restpath/\"" &>> "$g_logfile"
+    sudo rsync -aAX --delete --verbose --exclude-from="$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
     if [ $? -ne 0 ]; then
       showx "Something went wrong with the restore.  Check '$g_logfile' for details."
       exit 3
@@ -207,13 +205,11 @@ restore_snapshot() {
 dryrun_snapshot() {
   local backpath=$1 name=$2 restpath=$3
 
-  local excludespathname="/etc/ts-excludes"
-
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 
   # Do a dry run and record the output
-  echo rsync -aAX --dry-run --delete --verbose "--exclude-from=$excludespathname" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
-  sudo rsync -aAX --dry-run --delete --verbose "--exclude-from=$excludespathname" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
+  echo rsync -aAX --dry-run --delete --verbose "--exclude-from=$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
+  sudo rsync -aAX --dry-run --delete --verbose "--exclude-from=$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
 }
 
 # --------------------
