@@ -9,14 +9,14 @@ show_syntax() {
   echo "Syntax: $(basename $0) <backup_device>"
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "NOTE:   Must be run as sudo."
-  exit  
+  exit
 }
 
 list_snapshots() {
   local device=$1 path=$2
 
   # Get the snapshots
-  local snapshots=() note name
+  local note name
   local i=0
   while IFS= read -r name; do
     if [ $i -eq 0 ]; then
@@ -29,7 +29,7 @@ list_snapshots() {
     fi
     show "$name: $note"
     ((i++))
-  done < <( ls -1 "$path" | sort )
+  done < <( ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}_.+$' | sort )
 
   if [ $i -eq 0 ]; then
     showx "There are no backups on $device"
