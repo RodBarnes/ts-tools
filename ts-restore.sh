@@ -106,7 +106,11 @@ build_boot() {
   local restdev=$1 restpath=$2
 
   local osid=$(grep "^ID=" "$restpath/etc/os-release" | cut -d'=' -f2 | tr -d '"')
-  local partno=$(lsblk -no PARTN "$restdev" 2>/dev/null || echo "2")
+  local partno=$(lsblk -no PARTN "$restdev" 2>/dev/null)
+  if [ -z "$partno" ]; then
+      showx "WARNING: Could not determine partition number for '$restdev'; defaulting to 2."
+      partno="2"
+  fi
 
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 
