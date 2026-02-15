@@ -283,13 +283,13 @@ fi
 mount_device_at_path "$restoredevice" "$restorepath"
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 
-if [ -n "$snapshotname" ] && [ ! -d $g_backuppath/$g_backupdir/$snapshotname ]; then
+if [ -n "$snapshotname" ] && [ ! -d "$g_backuppath/$g_backupdir/$snapshotname" ]; then
   printx "There is no snapshot '$snapshotname' on '$backupdevice'."
   unset snapshotname
 fi
 
 # Since a snapshot was not specified, present a list for selection
-if [ -z $snapshotname ]; then
+if [ -z "$snapshotname" ]; then
   snapshotname=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
 fi
 
