@@ -153,7 +153,7 @@ build_boot() {
     echo "Confirmed EFI boot entry for '$osid' exists." &>> "$g_logfile"
   fi
 
-  if [ ! -f "$restorepath/boot/efi/EFI/BOOT/BOOTX64.EFI" ]; then
+  if [ ! -f "$restpath/boot/efi/EFI/BOOT/BOOTX64.EFI" ]; then
     # Copy bootloader to default EFI path as a fall back
     sudo cp "$restpath/boot/efi/EFI/$osid/$g_bootfile" "$restpath/boot/efi/EFI/BOOT/BOOTX64.EFI" &>> "$g_logfile"
     if [ $? -ne 0 ]; then
@@ -162,7 +162,7 @@ build_boot() {
       echo "Successfully copied $g_bootfile to EFI/BOOT/BOOTX64.EFI" &>> "$g_logfile"
     fi
   else
-    echo "Confirmed '$restorepath/boot/efi/EFI/BOOT/BOOTX64.EFI' exists for fallback." &>> "$g_logfile"
+    echo "Confirmed '$restpath/boot/efi/EFI/BOOT/BOOTX64.EFI' exists for fallback." &>> "$g_logfile"
   fi
 
   # Unbind the directories
