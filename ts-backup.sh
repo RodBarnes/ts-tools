@@ -159,13 +159,6 @@ else
   show_syntax
 fi
 
-# show "g_backuppath=$g_backuppath"
-# show "g_backupdir=$g_backupdir"
-# show "backupdevice=$backupdevice"
-# show "dryrun=$dryrun"
-# show "comment=$comment"
-# exit
-
 verify_sudo
 
 if [[ ! -b $backupdevice ]]; then

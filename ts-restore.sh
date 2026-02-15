@@ -266,13 +266,6 @@ else
   show_syntax
 fi
 
-# echo "backupdevice:$backupdevice"
-# echo "restoredevice:$restoredevice"
-# echo "dryrun:$dryrun"
-# echo "bootdevice:$bootdevice"
-# echo "snapshotname:$snapshotname"
-# exit
-
 verify_sudo
 
 if [[ ! -b $backupdevice ]]; then
@@ -306,36 +299,15 @@ if [ -n "$snapshotname" ]; then
   if [ -z "$dryrun" ]; then
     restore_snapshot "$g_backuppath/$g_backupdir" "$snapshotname" "$restorepath"
 
-    # echo "Before get_bootfile..."
-    # echo "restoredevice=$restoredevice"
-    # echo "g_bootfile=$g_bootfile"
-    # echo "bootdevice=$bootdevice"
-    # echo
     get_bootfile "$restorepath"
 
     if [ -z "$bootdevice" ]; then
-      # echo "Before validate_boot_config..."
-      # echo "restoredevice=$restoredevice"
-      # echo "g_bootfile=$g_bootfile"
-      # echo "bootdevice=$bootdevice"
-      # echo
       validate_boot_config "$restoredevice" "$restorepath"
     fi
 
     if [ -n "$bootdevice" ]; then
-      # echo "Before get_build_boot..."
-      # echo "restoredevice=$restoredevice"
-      # echo "g_bootfile=$g_bootfile"
-      # echo "bootdevice=$bootdevice"
-      # echo
       build_boot "$restoredevice" "$restorepath"
-    fi
-
-    # echo "After all boot stuff..."
-    # echo "restoredevice=$restoredevice"
-    # echo "g_bootfile=$g_bootfile"
-    # echo "bootdevice=$bootdevice"
-    # echo
+      if [ $? -ne 0 ]; then
 
     # Done
     echo "✅ Restore complete: $g_backuppath/$g_backupdir/$snapshotname"
