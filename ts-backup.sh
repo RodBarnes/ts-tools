@@ -38,7 +38,7 @@ verify_available_space() {
 create_snapshot() {
   local device=$1 path=$2 name=$3 note=$4 dry=$5 perm=$6
 
-  if [[ -n $perm ]]; then
+  if [[ -n "$perm" ]]; then
     show "The backup device does not support permmissions or ownership."
     show "The rsync will be performed without attempting to set these options."
   fi
@@ -60,7 +60,7 @@ create_snapshot() {
 
   # Create the snapshot
   [ -n "$dry" ] && dryrun_flag="--dry-run" || dryrun_flag=""
-  if [ -n $latest ]; then
+  if [ -n "$latest" ]; then
     show "Creating incremental snapshot on '$device'..."
     type="incr"
     # Snapshots exist so create incremental snapshot referencing the latest
@@ -74,7 +74,7 @@ create_snapshot() {
     sudo rsync -aAX $dryrun_flag $perm --verbose --delete $excludearg / "$path/$name/" &>> "$g_logfile"
   fi
 
-  if [ -z $dry ]; then
+  if [ -z "$dry" ]; then
     # Use a default comment if one was not provided
     if [ -z "$note" ]; then
       note="<no desc>"
@@ -112,7 +112,7 @@ check_rsync_perm() {
       ;;
   esac
 
-  if [ -n $noperm ]; then
+  if [ -n "$noperm" ]; then
     echo "Using options '$noperm' to prevent attempt to change ownership or permissions." &>> "$g_logfile"
   fi
 

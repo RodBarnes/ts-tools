@@ -72,7 +72,7 @@ fi
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 while true; do
   snapshotname=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
-  if [ -n $snapshotname ]; then
+  if [ -n "$snapshotname" ]; then
     delete_snapshot "$g_backuppath/$g_backupdir" "$snapshotname"
   else
     exit

@@ -288,7 +288,7 @@ fi
 mount_device_at_path "$restoredevice" "$restorepath"
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 
-if [ -n $snapshotname ] && [ ! -d $g_backuppath/$g_backupdir/$snapshotname ]; then
+if [ -n "$snapshotname" ] && [ ! -d $g_backuppath/$g_backupdir/$snapshotname ]; then
   printx "There is no snapshot '$snapshotname' on '$backupdevice'."
   unset snapshotname
 fi
@@ -302,8 +302,8 @@ fi
 g_logfile="/tmp/$(basename $0)_$snapshotname.log"
 echo -n &> "$g_logfile"
 
-if [ -n $snapshotname ]; then
-  if [ -z $dryrun ]; then
+if [ -n "$snapshotname" ]; then
+  if [ -z "$dryrun" ]; then
     restore_snapshot "$g_backuppath/$g_backupdir" "$snapshotname" "$restorepath"
 
     # echo "Before get_bootfile..."
@@ -313,7 +313,7 @@ if [ -n $snapshotname ]; then
     # echo
     get_bootfile "$restorepath"
 
-    if [ -z $bootdevice ]; then
+    if [ -z "$bootdevice" ]; then
       # echo "Before validate_boot_config..."
       # echo "restoredevice=$restoredevice"
       # echo "g_bootfile=$g_bootfile"
@@ -322,7 +322,7 @@ if [ -n $snapshotname ]; then
       validate_boot_config "$restoredevice" "$restorepath"
     fi
 
-    if [ -n $bootdevice ]; then
+    if [ -n "$bootdevice" ]; then
       # echo "Before get_build_boot..."
       # echo "restoredevice=$restoredevice"
       # echo "g_bootfile=$g_bootfile"
