@@ -57,14 +57,14 @@ get_bootfile() {
 }
 
 validate_boot_config() {
-  local restdev=$1 restpath=$2
+  local restdev=$1 restpath=$2 bootdev=$3
 
   local boot_valid=1
+  local validated_bootdev="$bootdev"
 
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 
   # Boot build was not requested so validate restored boot components
-  # To see if it should be done anyway...
   show "Validating restored boot components..."
   if [ ! -f "$restpath/boot/grub/grub.cfg" ]; then
     echo "Warning: $restpath/boot/grub/grub.cfg not found" &>> "$g_logfile"
@@ -82,30 +82,46 @@ validate_boot_config() {
     echo "Warning: Bootloader file $restpath/boot/efi/EFI/debian/$g_bootfile not found" &>> "$g_logfile"
     boot_valid=0
   fi
+
   if [ $boot_valid -eq 0 ]; then
     # There is an issue with the boot configuration
     showx "The boot configuration on '$restdev' seems incorrect.  To ensure it is bootable"
     showx "it is recommended to update/install grub and verify/establish a EFI boot entry.  Proceed?"
-    while true; do
-      readx "Enter the boot device (or press ENTER to skip):" bootdevice
-      if [ -z "$bootdevice" ]; then
-        showx "Skipping GRUB setup. Ensure the EFI boot entry is configured manually."
-        break
-      elif lsblk $bootdevice &> /dev/null; then
-        break
-      else
-        showx "That is not a recognized device."
+
+    # If bootdev was passed in, validate it
+    if [ -n "$bootdev" ]; then
+      if ! lsblk "$bootdev" &> /dev/null; then
+        showx "The specified boot device '$bootdev' is not valid."
+        validated_bootdev=""
       fi
-    done
+    fi
+
+    # If we don't have a valid bootdev, prompt for one
+    if [ -z "$validated_bootdev" ]; then
+      while true; do
+        readx "Enter the boot device (or press ENTER to skip):" validated_bootdev
+        if [ -z "$validated_bootdev" ]; then
+          showx "Skipping GRUB setup. Ensure the EFI boot entry is configured manually."
+          break
+        elif lsblk "$validated_bootdev" &> /dev/null; then
+          break
+        else
+          showx "That is not a recognized device."
+        fi
+      done
+    fi
   else
     echo "Boot configuration appears valid." &>> "$g_logfile"
   fi
+
+  # Return the validated bootdevice (or empty string)
+  echo "$validated_bootdev"
 }
 
 build_boot() {
   trap 'sudo umount "$restpath/boot/efi" "$restpath/dev/pts" "$restpath/dev" "$restpath/proc" "$restpath/sys" 2>/dev/null' RETURN
 
-  local restdev=$1 restpath=$2
+  local restdev=$1 restpath=$2 bootdev=$3
 
   local osid=$(grep "^ID=" "$restpath/etc/os-release" | cut -d'=' -f2 | tr -d '"')
   local partno=$(lsblk -no PARTN "$restdev" 2>/dev/null)
@@ -117,9 +133,9 @@ build_boot() {
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 
   # Mount the necessary directories
-  mount "$bootdevice" "$restpath/boot/efi"
+  mount "$bootdev" "$restpath/boot/efi"
   if [ $? -ne 0 ]; then
-    showx "Unable to mount the EFI System Partition on $bootdevice."
+    showx "Unable to mount the EFI System Partition on $bootdev."
     return 2
   fi
   mount --bind /dev "$restpath/dev"
@@ -142,14 +158,14 @@ build_boot() {
     return 2
   fi
 
-  show "Checking EFI on $bootdevice"
+  show "Checking EFI on $bootdev"
   # Check for an existing boot entry
   efibootmgr | grep -q "$osid" &>> "$g_logfile"
   if ! efibootmgr | grep -q "$osid"; then
-    show "Building the UEFI boot entry on $bootdevice with an entry for $restdev..."
+    show "Building the UEFI boot entry on $bootdev with an entry for $restdev..."
 
     # Set UEFI boot entry -- where partno is the target partition for the boot entry
-    efibootmgr -c -d $bootdevice -p $partno -L $osid -l "/EFI/$osid/$g_bootfile" &>> "$g_logfile"
+    efibootmgr -c -d $bootdev -p $partno -L $osid -l "/EFI/$osid/$g_bootfile" &>> "$g_logfile"
     if [ $? -ne 0 ]; then
       showx "Something went wrong with 'efibootmgr'. Check '$g_logfile' for details."
       return 3
@@ -172,9 +188,9 @@ build_boot() {
 }
 
 restore_snapshot() {
-  local backpath=$1 name=$2 restpath=$3
+  local backpath=$1 name=$2 restpath=$3 restdev=$4
 
-  printx "This will completely OVERWRITE the operating system on '$restoredevice'."
+  printx "This will completely OVERWRITE the operating system on '$restdev'."
   readx "Are you sure you want to proceed? (y/N) " yn
   if [[ $yn != "y" && $yn != "Y" ]]; then
     show "Operation cancelled."
@@ -191,7 +207,7 @@ restore_snapshot() {
       fi
     fi
 
-    show "Restoring '$snapshotname' to '$restoredevice'..."
+    show "Restoring '$name' to '$restdev'..."
     echo "---${FUNCNAME}---" &>> "$g_logfile"
     # Restore the snapshot
     echo "rsync -aAX --delete --verbose --exclude-from=\"$g_excludesfile\" \"$backpath/$name/\" \"$restpath/\"" &>> "$g_logfile"
@@ -299,16 +315,16 @@ echo -n &> "$g_logfile"
 
 if [ -n "$snapshotname" ]; then
   if [ -z "$dryrun" ]; then
-    restore_snapshot "$g_backuppath/$g_backupdir" "$snapshotname" "$restorepath"
+    restore_snapshot "$g_backuppath/$g_backupdir" "$snapshotname" "$restorepath" "$restoredevice"
 
     get_bootfile "$restorepath"
 
     if [ -z "$bootdevice" ]; then
-      validate_boot_config "$restoredevice" "$restorepath"
+      bootdevice=$(validate_boot_config "$restoredevice" "$restorepath" "$bootdevice")
     fi
 
     if [ -n "$bootdevice" ]; then
-      build_boot "$restoredevice" "$restorepath"
+      build_boot "$restoredevice" "$restorepath" "$bootdevice"
       if [ $? -ne 0 ]; then
         showx "Boot configuration failed. The restored system may not be bootable."
         showx "Check '$g_logfile' for details."
