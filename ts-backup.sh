@@ -91,14 +91,14 @@ create_snapshot() {
 }
 
 check_rsync_perm() {
-  local path=$1
+  local path=$1 device=$2
 
   unset noperm
   local fstype=$(lsblk --output MOUNTPOINTS,FSTYPE | grep "$path" | tr -s ' ' | cut -d ' ' -f2)
   echo "Backup device type is: $fstype" &>> "$g_logfile"
   case "$fstype" in
     "vfat"|"exfat")
-      show "NOTE: The backup device '$backupdevice' is $fstype."
+      show "NOTE: The backup device '$device' is $fstype."
       noperm="--no-perms --no-owner"
       ;;
     "ntfs"|"ntfs3")
@@ -176,7 +176,7 @@ echo -n &> "$g_logfile"
 mount_device_at_path  "$backupdevice" "$g_backuppath" "$g_backupdir"
 
 verify_available_space "$backupdevice" "$g_backuppath" "$minimum_space"
-perm_opt=$(check_rsync_perm "$g_backuppath")
+perm_opt=$(check_rsync_perm "$g_backuppath" "$backupdevice")
 create_snapshot "$backupdevice" "$g_backuppath/$g_backupdir" "$snapshotname" "$comment" "$dryrun" "$perm_opt"
 
 echo "✅ Backup complete: $g_backuppath/$g_backupdir/$snapshotname"
