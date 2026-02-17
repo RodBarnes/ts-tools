@@ -70,7 +70,7 @@ create_snapshot() {
     show "Creating full snapshot on '$device'..."
     type="full"
     # This is the first snapshot so create full snapshot
-    echo "rsync -aAX $dryrun_flagy $perm --verbose --delete $excludearg / \"$path/$name/\"" &>> "$g_logfile"
+    echo "rsync -aAX $dryrun_flag $perm --verbose --delete $excludearg / \"$path/$name/\"" &>> "$g_logfile"
     rsync -aAX $dryrun_flag $perm --verbose --delete $excludearg / "$path/$name/" &>> "$g_logfile"
   fi
 
