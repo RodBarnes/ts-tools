@@ -291,7 +291,7 @@ if [[ ! -b $backupdevice ]]; then
   exit
 fi
 
-if [ ! -b $restoredevice ]; then
+if [[ ! -b $restoredevice ]]; then
   printx "No valid restore device was found for '$restoredevice'."
   exit
 fi

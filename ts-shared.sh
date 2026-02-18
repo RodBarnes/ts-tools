@@ -35,7 +35,7 @@ select_snapshot() {
       comment="<no desc>"
     fi
     snapshots+=("${backup}: $comment")
-  done < <( find $path -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | sort )
+  done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | sort )
 
   if [ ${#snapshots[@]} -eq 0 ]; then
     showx "There are no backups on $device"
