@@ -8,7 +8,7 @@ These are written for bash on debian-based distros.  They may work as is or shou
 NOTE: Yes, TimeShift provides a command line but TimeShift includes all the GUI dependicies even if they aren't required on a headless system.  Plus, this was a fun project.
 
 ## ts-backup.sh
-Usage: `sudo ts-backup <backup_device> [-d|--dry-run] [-c|--comment "comment"]`
+Usage: `sudo ts-backup <backup_device> [-d|--dry-run] [-c|--comment "comment"] [-v|--verbose]`
 
 Creates a full or incrental snapshot on the `backup_device` of the current active partition from which it is run.
 
@@ -26,7 +26,7 @@ Usage: `sudo ts-list <backup_device>`
 Lists the `ts-backup` snapshots found on the designated device.
 
 ## ts-restore.sh
-Usage: `sudo ts-restore <backup_device> <restore_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshot_name]`
+Usage: `sudo ts-restore <backup_device> <restore_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshot_name] [-v|--verbose]`
 
 Restores a `ts-backup` snapshot from the `backup_device` to the `restore_device`.
 
