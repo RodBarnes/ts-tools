@@ -10,6 +10,7 @@ show_syntax() {
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually restoring the snapshot."
   echo "        [-c|--comment comment] is a quote-bounded comment for the snapshot"
+  echo "        [-v|--verbose] will display the output log in process."
   echo "NOTE:   Must be run as sudo."
   exit
 }
@@ -116,15 +117,20 @@ check_rsync_perm() {
   echo $noperm
 }
 
+cleanup() {
+  unmount_device_at_path "$g_backuppath"
+  [[ -n "$tail_pid" ]] && kill "$tail_pid" 2>/dev/null
+}
+
 # --------------------
 # ------- MAIN -------
 # --------------------
 
-trap 'unmount_device_at_path "$g_backuppath"' EXIT
+trap 'cleanup' EXIT
 
 # Get the arguments
-arg_short=dc:
-arg_long=dry-run,comment:
+arg_short=dvc:
+arg_long=dry-run,verbose,comment:
 arg_opts=$(getopt --options "$arg_short" --long "$arg_long" --name "$0" -- "$@")
 if [ $? != 0 ]; then
   show_syntax
@@ -141,6 +147,10 @@ while true; do
     -c|--comment)
       comment="$2"
       shift 2
+      ;;
+    -v|--verbose)
+      verbose=true
+      shift
       ;;
     --) # End of options
       shift
@@ -172,6 +182,12 @@ snapshotname="$(date +%Y%m%d_%H%M%S)_$(hostname -s)"
 # Initialize the log file
 g_logfile="/tmp/$(basename $0)_$snapshotname.log"
 echo -n &> "$g_logfile"
+
+# Start tailing if requested
+if [[ -n "$verbose" ]]; then
+  tail -f "$g_logfile" &
+  tail_pid=$!
+fi
 
 mount_device_at_path  "$backupdevice" "$g_backuppath" "$g_backupdir"
 

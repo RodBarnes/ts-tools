@@ -11,6 +11,7 @@ show_syntax() {
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually creating the backup."
   echo "        [-g--grub-install boot_device] means to rebuild grub on the specified device; e.g., /dev/sda1."
   echo "        [-s|--snapshot snapshotname] is the name (timestamp) of the snapshot to restore -- if not present, a selection is presented."
+  echo "        [-v|--verbose] will display the output log in process."
   echo "NOTE:   Must be run as sudo."
   exit
 }
@@ -234,17 +235,23 @@ dryrun_snapshot() {
   rsync -aAX --dry-run --delete --verbose "--exclude-from=$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
 }
 
+cleanup() {
+  unmount_device_at_path "$g_backuppath"
+  unmount_device_at_path "$restorepath"
+  [[ -n "$tail_pid" ]] && kill "$tail_pid" 2>/dev/null
+}
+
 # --------------------
 # ------- MAIN -------
 # --------------------
 
-trap 'unmount_device_at_path "$g_backuppath"; unmount_device_at_path "$restorepath"' EXIT
+trap 'cleanup' EXIT
 
 restorepath="/mnt/restore"
 
 # Get the arguments
-arg_short=dg:s:
-arg_long=dry-run,grub-install:,snapshot:
+arg_short=dvg:s:
+arg_long=dry-run,verbose,grub-install:,snapshot:
 arg_opts=$(getopt --options "$arg_short" --long "$arg_long" --name "$0" -- "$@")
 if [ $? != 0 ]; then
   show_syntax
@@ -265,6 +272,10 @@ while true; do
     -s|--snapshot)
       snapshotname="$2"
       shift 2
+      ;;
+    -v|--verbose)
+      verbose=true
+      shift
       ;;
     --) # End of options
       shift
@@ -312,6 +323,12 @@ fi
 # Initialize the log file
 g_logfile="/tmp/$(basename $0)_$snapshotname.log"
 echo -n &> "$g_logfile"
+
+# Start tailing if requested
+if [[ -n "$verbose" ]]; then
+  tail -f "$g_logfile" &
+  tail_pid=$!
+fi
 
 if [ -n "$snapshotname" ]; then
   if [ -z "$dryrun" ]; then
