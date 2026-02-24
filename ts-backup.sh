@@ -61,6 +61,11 @@ create_snapshot() {
 
   # Create the snapshot
   [ -n "$dry" ] && dryrun_flag="--dry-run" || dryrun_flag=""
+
+  # Capture device usage before rsync to calculate actual snapshot size
+  local used_before
+  used_before=$(df "$path" --output=used -BK | tail -1 | tr -d 'K')
+
   if [ -n "$latest" ]; then
     show "Creating incremental snapshot on '$device'..."
     type="incr"
@@ -81,8 +86,21 @@ create_snapshot() {
       note="<no desc>"
     fi
 
+    # Calculate actual space consumed by this snapshot (hard links don't add blocks,
+    # so the df delta reflects only the new unique files written by this snapshot)
+    local used_after delta_kb snapshot_size
+    used_after=$(df "$path" --output=used -BK | tail -1 | tr -d 'K')
+    delta_kb=$(( used_after - used_before ))
+    if (( delta_kb >= 1048576 )); then
+      snapshot_size="$(( delta_kb / 1048576 ))G"
+    elif (( delta_kb >= 1024 )); then
+      snapshot_size="$(( delta_kb / 1024 ))M"
+    else
+      snapshot_size="${delta_kb}K"
+    fi
+
     # Create comment in the snapshot directory
-    echo "($type $(du -sh $path/$name | awk '{print $1}')) $note" > "$path/$name/$g_descfile"
+    echo "($type $snapshot_size) $note" > "$path/$name/$g_descfile"
 
     # Done
     show "The snapshot '$name' was successfully completed."
