@@ -219,7 +219,7 @@ restore_snapshot() {
     fi
 
     if [ -f "$restpath/$g_infofile" ]; then
-      # Delete the description file from the target
+      # Delete the info file from the target
       rm "$restpath/$g_infofile"
     fi
   fi
