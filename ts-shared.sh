@@ -5,7 +5,7 @@
 source /usr/local/lib/display.sh
 source /usr/local/lib/device.sh
 
-g_descfile=comment.txt
+g_infofile=info.json
 g_backuppath=/mnt/backup
 g_backupdir="ts"
 g_excludesfile="/etc/ts-excludes"
@@ -29,8 +29,8 @@ select_snapshot() {
 
   # Get the snapshots and allow selecting
   while IFS= read -r backup; do
-    if [ -f "$path/$backup/$g_descfile" ]; then
-      comment=$(cat "$path/$backup/$g_descfile")
+    if [ -f "$path/$backup/$g_infofile" ]; then
+      comment=$(jq -r '.comment' "$path/$backup/$g_infofile")
     else
       comment="<no desc>"
     fi

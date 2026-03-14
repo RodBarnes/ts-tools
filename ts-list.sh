@@ -16,18 +16,18 @@ list_snapshots() {
   local device=$1 path=$2
 
   # Get the snapshots
-  local note name
+  local comment name
   local i=0
   while IFS= read -r name; do
     if [ $i -eq 0 ]; then
       show "Snapshot files on $device"
     fi
-    if [ -f "$path/$name/$g_descfile" ]; then
-      note="$(cat $path/$name/$g_descfile)"
+    if [ -f "$path/$name/$g_infofile" ]; then
+      comment=$(jq -r '.comment' "$path/$name/$g_infofile")
     else
-      note="<no desc>"
+      comment="<no desc>"
     fi
-    show "$name: $note"
+    show "$name: $comment"
     ((i++))
   done < <( ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}_.+$' | sort )
 

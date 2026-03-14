@@ -218,9 +218,9 @@ restore_snapshot() {
       exit 3
     fi
 
-    if [ -f "$restpath/$g_descfile" ]; then
+    if [ -f "$restpath/$g_infofile" ]; then
       # Delete the description file from the target
-      rm "$restpath/$g_descfile"
+      rm "$restpath/$g_infofile"
     fi
   fi
 }
@@ -288,9 +288,8 @@ while true; do
   esac
 done
 
-if [ $# -ge 2 ]; then
+if [ $# -ge 1 ]; then
   backupdevice=$(get_device "$1")
-  restoredevice=$(get_device "$2")
 else
   show_syntax
 fi
@@ -302,12 +301,6 @@ if [[ ! -b $backupdevice ]]; then
   exit
 fi
 
-if [[ ! -b $restoredevice ]]; then
-  printx "No valid restore device was found for '$restoredevice'."
-  exit
-fi
-
-mount_device_at_path "$restoredevice" "$restorepath"
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 
 if [ -n "$snapshotname" ] && [ ! -d "$g_backuppath/$g_backupdir/$snapshotname" ]; then
@@ -320,17 +313,28 @@ if [ -z "$snapshotname" ]; then
   snapshotname=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
 fi
 
-# Initialize the log file
-g_logfile="/tmp/$(basename $0)_$snapshotname.log"
-echo -n &> "$g_logfile"
-
-# Start tailing if requested
-if [[ -n "$verbose" ]]; then
-  tail -f "$g_logfile" &
-  tail_pid=$!
-fi
-
 if [ -n "$snapshotname" ]; then
+
+  # Get the source device
+  uuid=$(jq -r '.uuid' $g_backuppath/$g_backupdir/$snapshotname/$g_infofile)
+  restoredevice=$(blkid -U "$uuid")
+  if [[ ! -b $restoredevice ]]; then
+    printx "No valid restore device was found for '$restoredevice'."
+    exit
+  fi
+
+  mount_device_at_path "$restoredevice" "$restorepath"
+
+  # Initialize the log file
+  g_logfile="/tmp/$(basename $0)_$snapshotname.log"
+  echo -n &> "$g_logfile"
+
+  # Start tailing if requested
+  if [[ -n "$verbose" ]]; then
+    tail -f "$g_logfile" &
+    tail_pid=$!
+  fi
+
   if [ -z "$dryrun" ]; then
     restore_snapshot "$g_backuppath/$g_backupdir" "$snapshotname" "$restorepath" "$restoredevice"
 

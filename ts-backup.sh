@@ -100,7 +100,11 @@ create_snapshot() {
     fi
 
     # Create comment in the snapshot directory
-    echo "($type $snapshot_size) $note" > "$path/$name/$g_descfile"
+    comment="($type $snapshot_size) $note"
+    sourcedevice=$(findmnt -n -o SOURCE /)
+    uuid=$(blkid -s UUID -o value "$sourcedevice")
+    json=$(jq -nc --arg comment "$comment" --arg device "$sourcedevice" --arg uuid "$uuid" '{comment: $comment, device: $device, uuid: $uuid}')
+    echo $json > "$path/$name/$g_infofile"
 
     # Done
     show "The snapshot '$name' was successfully completed."
