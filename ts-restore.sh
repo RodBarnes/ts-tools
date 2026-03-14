@@ -318,7 +318,10 @@ if [ -n "$snapshotname" ]; then
   # Get the source device
   uuid=$(jq -r '.uuid' $g_backuppath/$g_backupdir/$snapshotname/$g_infofile)
   restoredevice=$(blkid -U "$uuid")
-  if [[ ! -b $restoredevice ]]; then
+  if [ -z $restoredevice ]; then
+    printx "Unable to locate the block device with UUID=$uuid"
+    exit
+  elif [[ ! -b $restoredevice ]]; then
     printx "No valid restore device was found for '$restoredevice'."
     exit
   fi
