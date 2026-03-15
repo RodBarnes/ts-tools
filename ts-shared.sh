@@ -25,46 +25,61 @@ get_device() {
 select_snapshot() {
   local device=$1 path=$2
 
-  local snapshots=() comment count name
+  local snapshots=() comment hostname name count
 
-  # Get the snapshots and allow selecting
-  while IFS= read -r backup; do
-    if [ -f "$path/$backup/$g_infofile" ]; then
-      comment=$(jq -r '.comment' "$path/$backup/$g_infofile")
-    else
-      comment="<no desc>"
-    fi
-    snapshots+=("${backup}: $comment")
-  done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | sort )
+  # Enumerate all UUID subdirectories, then snapshots within each, sorted by hostname then timestamp
+  while IFS= read -r uuiddir; do
+    while IFS= read -r backup; do
+      local infopath="$uuiddir/$backup/$g_infofile"
+      if [ -f "$infopath" ]; then
+        hostname=$(jq -r '.hostname' "$infopath")
+        comment=$(jq -r '.comment' "$infopath")
+      else
+        hostname="unknown"
+        comment="<no desc>"
+      fi
+      snapshots+=("${uuiddir##*/}/$backup|$hostname  $backup: $comment")
+    done < <( find "$uuiddir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
+  done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
 
   if [ ${#snapshots[@]} -eq 0 ]; then
     showx "There are no backups on $device"
-  else
-    show "Listing backup files..."
-
-    # Get the count of options and increment to include the cancel
-    count="${#snapshots[@]}"
-    ((count++))
-
-    COLUMNS=1
-    select selection in "${snapshots[@]}" "Cancel"; do
-      if [[ "$REPLY" =~ ^[0-9]+$ && "$REPLY" -ge 1 && "$REPLY" -le $count ]]; then
-        case ${selection} in
-          "Cancel")
-            # If the user decides to cancel...
-            echo "Operation cancelled." >&2
-            break
-            ;;
-          *)
-            name="${selection%%:*}"
-            break
-            ;;
-        esac
-      else
-        showx "Invalid selection. Please enter a number between 1 and $count."
-      fi
-    done
+    return
   fi
+
+  # Sort entries by the display portion (hostname first, then timestamp) and rebuild array
+  local sorted_snapshots=()
+  while IFS= read -r entry; do
+    sorted_snapshots+=("$entry")
+  done < <( printf '%s\n' "${snapshots[@]}" | sort -t'|' -k2 )
+
+  # Build display-only labels for select
+  local labels=()
+  for entry in "${sorted_snapshots[@]}"; do
+    labels+=("${entry##*|}")
+  done
+
+  show "Listing backup files..."
+
+  count="${#labels[@]}"
+  ((count++))
+
+  COLUMNS=1
+  select selection in "${labels[@]}" "Cancel"; do
+    if [[ "$REPLY" =~ ^[0-9]+$ && "$REPLY" -ge 1 && "$REPLY" -le $count ]]; then
+      if [[ "$selection" == "Cancel" ]]; then
+        echo "Operation cancelled." >&2
+        break
+      else
+        # Map selected label back to its uuid/snapshot path token
+        local idx=$(( REPLY - 1 ))
+        name="${sorted_snapshots[$idx]%%|*}"
+        break
+      fi
+    else
+      showx "Invalid selection. Please enter a number between 1 and $count."
+    fi
+  done
 
   echo "$name"
 }

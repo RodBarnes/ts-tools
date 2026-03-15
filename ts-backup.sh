@@ -44,8 +44,8 @@ create_snapshot() {
     show "The rsync will be performed without attempting to set these options."
   fi
 
-  # Get the name of the most recent backup
-  local latest=$(ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}_.+$' | sort -r | sed -n '1p;')
+  # Get the name of the most recent backup in this system's UUID subdirectory
+  local latest=$(ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}$' | sort -r | sed -n '1p;')
   local type
 
   if [ -f "$g_excludesfile" ]; then
@@ -70,8 +70,8 @@ create_snapshot() {
     show "Creating incremental snapshot on '$device'..."
     type="incr"
     # Snapshots exist so create incremental snapshot referencing the latest
-    echo "rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest=\"$g_backuppath/$g_backupdir/$latest\" $excludearg / \"$path/$name/\"" &>> "$g_logfile"
-    rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest="$g_backuppath/$g_backupdir/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
+    echo "rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest=\"$path/$latest\" $excludearg / \"$path/$name/\"" &>> "$g_logfile"
+    rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest="$path/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
   else
     show "Creating full snapshot on '$device'..."
     type="full"
@@ -99,11 +99,12 @@ create_snapshot() {
       snapshot_size="${delta_kb}K"
     fi
 
-    # Create comment in the snapshot directory
+    # Create info file in the snapshot directory
     comment="($type $snapshot_size) $note"
     sourcedevice=$(findmnt -n -o SOURCE /)
     uuid=$(blkid -s UUID -o value "$sourcedevice")
-    json=$(jq -nc --arg comment "$comment" --arg device "$sourcedevice" --arg uuid "$uuid" '{comment: $comment, device: $device, uuid: $uuid}')
+    hostname=$(hostname -s)
+    json=$(jq -nc --arg comment "$comment" --arg device "$sourcedevice" --arg uuid "$uuid" --arg hostname "$hostname" '{comment: $comment, device: $device, uuid: $uuid, hostname: $hostname}')
     echo $json > "$path/$name/$g_infofile"
 
     # Done
@@ -198,8 +199,16 @@ if [[ ! -b $backupdevice ]]; then
   exit
 fi
 
+# Resolve source UUID before mounting to build the per-system subdirectory path
+sourcedevice=$(findmnt -n -o SOURCE /)
+sourceuuid=$(blkid -s UUID -o value "$sourcedevice")
+if [ -z "$sourceuuid" ]; then
+  printx "Unable to determine UUID of source device '$sourcedevice'."
+  exit
+fi
+
 minimum_space=5 # Amount in GB
-snapshotname="$(date +%Y%m%d_%H%M%S)_$(hostname -s)"
+snapshotname="$(date +%Y%m%d_%H%M%S)"
 
 # Initialize the log file
 g_logfile="/tmp/$(basename $0)_$snapshotname.log"
@@ -211,11 +220,15 @@ if [[ -n "$verbose" ]]; then
   tail_pid=$!
 fi
 
-mount_device_at_path  "$backupdevice" "$g_backuppath" "$g_backupdir"
+mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
+
+# Ensure the per-system UUID subdirectory exists
+snapshotpath="$g_backuppath/$g_backupdir/$sourceuuid"
+mkdir -p "$snapshotpath"
 
 verify_available_space "$backupdevice" "$g_backuppath" "$minimum_space"
 perm_opt=$(check_rsync_perm "$g_backuppath" "$backupdevice")
-create_snapshot "$backupdevice" "$g_backuppath/$g_backupdir" "$snapshotname" "$comment" "$dryrun" "$perm_opt"
+create_snapshot "$backupdevice" "$snapshotpath" "$snapshotname" "$comment" "$dryrun" "$perm_opt"
 
-echo "✅ Backup complete: $g_backuppath/$g_backupdir/$snapshotname"
+echo "✅ Backup complete: $snapshotpath/$snapshotname"
 echo "Details of the operation can be viewed in the file '$g_logfile'"

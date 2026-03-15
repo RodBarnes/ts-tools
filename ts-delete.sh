@@ -13,8 +13,9 @@ show_syntax() {
 }
 
 delete_snapshot() {
-  local path=$1 name=$2
-  local snapshot_dir="$path/$name"
+  local path=$1 subpath=$2
+  local snapshot_dir="$path/$subpath"
+  local name="${subpath##*/}"
   local guid=$(cat /proc/sys/kernel/random/uuid)
   local empty_dir=$(mktemp -d /tmp/empty.$guid)
 
@@ -72,9 +73,10 @@ fi
 
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 while true; do
-  snapshotname=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
-  if [ -n "$snapshotname" ]; then
-    delete_snapshot "$g_backuppath/$g_backupdir" "$snapshotname"
+  # select_snapshot returns "uuid/snapshotname"
+  snapshotsubpath=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
+  if [ -n "$snapshotsubpath" ]; then
+    delete_snapshot "$g_backuppath/$g_backupdir" "$snapshotsubpath"
   else
     exit
   fi

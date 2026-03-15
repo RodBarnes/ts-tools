@@ -15,25 +15,37 @@ show_syntax() {
 list_snapshots() {
   local device=$1 path=$2
 
-  # Get the snapshots
-  local comment name
+  local comment hostname name
   local i=0
-  while IFS= read -r name; do
-    if [ $i -eq 0 ]; then
-      show "Snapshot files on $device"
-    fi
-    if [ -f "$path/$name/$g_infofile" ]; then
-      comment=$(jq -r '.comment' "$path/$name/$g_infofile")
-    else
-      comment="<no desc>"
-    fi
-    show "$name: $comment"
-    ((i++))
-  done < <( ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}_.+$' | sort )
 
-  if [ $i -eq 0 ]; then
+  # Collect all entries as "hostname|timestamp|comment" for sorting by hostname then timestamp
+  local entries=()
+  while IFS= read -r uuiddir; do
+    while IFS= read -r name; do
+      local infopath="$uuiddir/$name/$g_infofile"
+      if [ -f "$infopath" ]; then
+        hostname=$(jq -r '.hostname' "$infopath")
+        comment=$(jq -r '.comment' "$infopath")
+      else
+        hostname="unknown"
+        comment="<no desc>"
+      fi
+      entries+=("$hostname|$name|$comment")
+    done < <( find "$uuiddir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
+  done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
+
+  if [ ${#entries[@]} -eq 0 ]; then
     showx "There are no backups on $device"
+    return
   fi
+
+  show "Snapshot files on $device"
+
+  # Sort by hostname then timestamp and display
+  while IFS='|' read -r hostname name comment; do
+    show "$hostname  $name: $comment"
+    ((i++))
+  done < <( printf '%s\n' "${entries[@]}" | sort )
 }
 
 cleanup() {
@@ -62,4 +74,3 @@ fi
 
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 list_snapshots "$backupdevice" "$g_backuppath/$g_backupdir"
-

@@ -6,8 +6,8 @@ source /usr/local/lib/ts-shared.sh
 
 show_syntax() {
   echo "Restore a snapshot created with ts-backup; emulates TimeShift."
-  echo "Syntax: $(basename $0) <backup_device> <restore_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshotname]"
-  echo "Where:  <backup_device> and <restore_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
+  echo "Syntax: $(basename $0) <backup_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshotname]"
+  echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually creating the backup."
   echo "        [-g--grub-install boot_device] means to rebuild grub on the specified device; e.g., /dev/sda1."
   echo "        [-s|--snapshot snapshotname] is the name (timestamp) of the snapshot to restore -- if not present, a selection is presented."
@@ -191,6 +191,8 @@ build_boot() {
 restore_snapshot() {
   local backpath=$1 name=$2 restpath=$3 restdev=$4
 
+  local hostname=$(jq -r '.hostname' "$backpath/$name/$g_infofile")
+
   printx "This will completely OVERWRITE the operating system on '$restdev'."
   readx "Are you sure you want to proceed? (y/N) " yn
   if [[ $yn != "y" && $yn != "Y" ]]; then
@@ -208,7 +210,7 @@ restore_snapshot() {
       fi
     fi
 
-    show "Restoring '$name' to '$restdev'..."
+    show "Restoring '$hostname' $name to '$restdev'..."
     echo "---${FUNCNAME}---" &>> "$g_logfile"
     # Restore the snapshot
     echo "rsync -aAX --delete --verbose --exclude-from=\"$g_excludesfile\" \"$backpath/$name/\" \"$restpath/\"" &>> "$g_logfile"
@@ -228,8 +230,11 @@ restore_snapshot() {
 dryrun_snapshot() {
   local backpath=$1 name=$2 restpath=$3
 
+  local hostname=$(jq -r '.hostname' "$backpath/$name/$g_infofile")
+
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 
+  echo "Performing dry-run restore of '$hostname' $name to '$restpath'..." &>> "$g_logfile"
   # Do a dry run and record the output
   echo rsync -aAX --dry-run --delete --verbose "--exclude-from=$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
   rsync -aAX --dry-run --delete --verbose "--exclude-from=$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
@@ -303,22 +308,36 @@ fi
 
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 
-if [ -n "$snapshotname" ] && [ ! -d "$g_backuppath/$g_backupdir/$snapshotname" ]; then
-  printx "There is no snapshot '$snapshotname' on '$backupdevice'."
-  unset snapshotname
+# If a snapshot name was specified, find which UUID subdir contains it
+if [ -n "$snapshotname" ]; then
+  matched_subpath=$(find "$g_backuppath/$g_backupdir" -mindepth 2 -maxdepth 2 -type d -name "$snapshotname" | head -1)
+  if [ -z "$matched_subpath" ]; then
+    printx "There is no snapshot '$snapshotname' on '$backupdevice'."
+    unset snapshotname
+  else
+    # Convert absolute path to relative uuid/snapshotname form
+    snapshotsubpath="${matched_subpath#$g_backuppath/$g_backupdir/}"
+  fi
 fi
 
 # Since a snapshot was not specified, present a list for selection
 if [ -z "$snapshotname" ]; then
-  snapshotname=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
+  # select_snapshot returns "uuid/snapshotname"
+  snapshotsubpath=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
 fi
 
-if [ -n "$snapshotname" ]; then
+if [ -n "$snapshotsubpath" ]; then
 
-  # Get the source device
-  uuid=$(jq -r '.uuid' $g_backuppath/$g_backupdir/$snapshotname/$g_infofile)
+  # Resolve the UUID subdir path and bare snapshot name
+  snapshotpath="$g_backuppath/$g_backupdir/${snapshotsubpath%/*}"
+  snapshotname="${snapshotsubpath##*/}"
+
+  # Read UUID from info.json to locate the restore device
+  infofile="$g_backuppath/$g_backupdir/$snapshotsubpath/$g_infofile"
+  uuid=$(jq -r '.uuid' "$infofile")
+
   restoredevice=$(blkid -U "$uuid")
-  if [ -z $restoredevice ]; then
+  if [ -z "$restoredevice" ]; then
     printx "Unable to locate the block device with UUID=$uuid"
     exit
   elif [[ ! -b $restoredevice ]]; then
@@ -338,8 +357,9 @@ if [ -n "$snapshotname" ]; then
     tail_pid=$!
   fi
 
+  hostname=$(jq -r '.hostname' "$infofile")
   if [ -z "$dryrun" ]; then
-    restore_snapshot "$g_backuppath/$g_backupdir" "$snapshotname" "$restorepath" "$restoredevice"
+    restore_snapshot "$snapshotpath" "$snapshotname" "$restorepath" "$restoredevice"
 
     get_bootfile "$restorepath"
 
@@ -357,11 +377,11 @@ if [ -n "$snapshotname" ]; then
     fi
 
     # Done
-    echo "✅ Restore complete: $g_backuppath/$g_backupdir/$snapshotname"
+    echo "✅ Restore complete: '$hostname' $snapshotname"
     echo "The system may now be rebooted into the restored partition."
   else
-    echo "Performing dry-run restore of '$snapshotname' to '$restoredevice'..."
-    dryrun_snapshot "$g_backuppath/$g_backupdir" "$snapshotname" "$restorepath"
+    echo "Performing dry-run restore of '$hostname' $snapshotname to '$restoredevice'..."
+    dryrun_snapshot "$snapshotpath" "$snapshotname" "$restorepath"
   fi
   echo "Details of the operation can be viewed in the file '$g_logfile'"
 fi
