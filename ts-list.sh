@@ -39,7 +39,9 @@ list_snapshots() {
     return
   fi
 
-  show "Snapshot files on $device"
+  show_device_space "$device"
+
+  show "Snapshot files:"
 
   # Sort by hostname then timestamp and display
   while IFS='|' read -r hostname name comment; do

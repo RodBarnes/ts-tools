@@ -72,6 +72,9 @@ if [[ ! -b $backupdevice ]]; then
 fi
 
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
+
+show_device_space "$backupdevice"
+
 while true; do
   # select_snapshot returns "uuid/snapshotname"
   snapshotsubpath=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")

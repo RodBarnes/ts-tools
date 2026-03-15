@@ -37,7 +37,7 @@ verify_available_space() {
 }
 
 create_snapshot() {
-  local device=$1 path=$2 name=$3 note=$4 dry=$5 perm=$6
+  local device=$1 path=$2 name=$3 comment=$4 dry=$5 perm=$6
 
   if [[ -n "$perm" ]]; then
     show "The backup device does not support permmissions or ownership."
@@ -46,7 +46,6 @@ create_snapshot() {
 
   # Get the name of the most recent backup in this system's UUID subdirectory
   local latest=$(ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}$' | sort -r | sed -n '1p;')
-  local type
 
   if [ -f "$g_excludesfile" ]; then
     excludearg="--exclude-from=$g_excludesfile"
@@ -68,13 +67,11 @@ create_snapshot() {
 
   if [ -n "$latest" ]; then
     show "Creating incremental snapshot on '$device'..."
-    type="incr"
     # Snapshots exist so create incremental snapshot referencing the latest
     echo "rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest=\"$path/$latest\" $excludearg / \"$path/$name/\"" &>> "$g_logfile"
     rsync -aAX $dryrun_flag $perm --verbose --delete --link-dest="$path/$latest" $excludearg / "$path/$name/" &>> "$g_logfile"
   else
     show "Creating full snapshot on '$device'..."
-    type="full"
     # This is the first snapshot so create full snapshot
     echo "rsync -aAX $dryrun_flag $perm --verbose --delete $excludearg / \"$path/$name/\"" &>> "$g_logfile"
     rsync -aAX $dryrun_flag $perm --verbose --delete $excludearg / "$path/$name/" &>> "$g_logfile"
@@ -82,25 +79,11 @@ create_snapshot() {
 
   if [ -z "$dry" ]; then
     # Use a default comment if one was not provided
-    if [ -z "$note" ]; then
-      note="<no desc>"
-    fi
-
-    # Calculate actual space consumed by this snapshot (hard links don't add blocks,
-    # so the df delta reflects only the new unique files written by this snapshot)
-    local used_after delta_kb snapshot_size
-    used_after=$(df "$path" --output=used -BK | tail -1 | tr -d 'K')
-    delta_kb=$(( used_after - used_before ))
-    if (( delta_kb >= 1048576 )); then
-      snapshot_size="$(( delta_kb / 1048576 ))G"
-    elif (( delta_kb >= 1024 )); then
-      snapshot_size="$(( delta_kb / 1024 ))M"
-    else
-      snapshot_size="${delta_kb}K"
+    if [ -z "$comment" ]; then
+      comment="<no desc>"
     fi
 
     # Create info file in the snapshot directory
-    comment="($type $snapshot_size) $note"
     sourcedevice=$(findmnt -n -o SOURCE /)
     uuid=$(blkid -s UUID -o value "$sourcedevice")
     hostname=$(hostname -s)

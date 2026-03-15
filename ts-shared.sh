@@ -59,7 +59,7 @@ select_snapshot() {
     labels+=("${entry##*|}")
   done
 
-  show "Listing backup files..."
+  show "Snapshot files..."
 
   count="${#labels[@]}"
   ((count++))
@@ -82,4 +82,10 @@ select_snapshot() {
   done
 
   echo "$name"
+}
+
+show_device_space() {
+  local device=$1
+  df -h --output=source,size,used,avail,pcent "$device" | tail -1 | \
+    awk '{printf "Device %s: %s total, %s used, %s available (%s)\n", $1, $2, $3, $4, $5}'
 }
