@@ -26,7 +26,7 @@ Usage: `sudo ts-list <backup_device>`
 Lists the `ts-backup` snapshots found on the designated device.
 
 ## ts-restore.sh
-Usage: `sudo ts-restore <backup_device> <restore_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshot_name] [-v|--verbose]`
+Usage: `sudo ts-restore <backup_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshot_name] [-v|--verbose]`
 
 Restores a `ts-backup` snapshot from the `backup_device` to the `restore_device`.
 
