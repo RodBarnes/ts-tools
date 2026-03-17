@@ -28,9 +28,9 @@ select_snapshot() {
   local snapshots=() comment hostname name count
 
   # Enumerate all hostname subdirectories, then snapshots within each, sorted by hostname then timestamp
-  while IFS= read -r uuiddir; do
+  while IFS= read -r hostnamedir; do
     while IFS= read -r backup; do
-      local infopath="$uuiddir/$backup/$g_infofile"
+      local infopath="$hostnamedir/$backup/$g_infofile"
       if [ -f "$infopath" ]; then
         hostname=$(jq -r '.hostname' "$infopath")
         comment=$(jq -r '.comment' "$infopath")
@@ -38,8 +38,8 @@ select_snapshot() {
         hostname="unknown"
         comment="<no desc>"
       fi
-      snapshots+=("${uuiddir##*/}/$backup|$hostname  $backup: $comment")
-    done < <( find "$uuiddir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
+      snapshots+=("${hostnamedir##*/}/$backup|$hostname  $backup: $comment")
+    done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
   done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
 
   if [ ${#snapshots[@]} -eq 0 ]; then

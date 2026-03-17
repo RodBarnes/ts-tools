@@ -31,7 +31,7 @@ list_snapshots() {
         comment="<no desc>"
       fi
       entries+=("$hostname|$name|$comment")
-    done < <( find "$uuiddir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
+    done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
   done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
 
   if [ ${#entries[@]} -eq 0 ]; then
