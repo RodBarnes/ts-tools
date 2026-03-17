@@ -358,6 +358,20 @@ if [ -n "$snapshotsubpath" ]; then
   fi
 
   hostname=$(jq -r '.hostname' "$infofile")
+
+  # Warn if this backup was made on a different machine
+  backup_machine_id=$(jq -r '.machine_id' "$infofile")
+  current_machine_id=$(cat /etc/machine-id)
+  if [ "$backup_machine_id" != "$current_machine_id" ]; then
+    showx "WARNING: This backup was made on a different machine (hostname: $hostname)."
+    showx "Restoring it to this machine may produce an unbootable or misconfigured system."
+    readx "Do you want to proceed anyway? (y/N)" yn
+    if [[ $yn != "y" && $yn != "Y" ]]; then
+      show "Operation cancelled."
+      exit
+    fi
+  fi
+
   if [ -z "$dryrun" ]; then
     restore_snapshot "$snapshotpath" "$snapshotname" "$restorepath" "$restoredevice"
 

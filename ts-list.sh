@@ -20,9 +20,9 @@ list_snapshots() {
 
   # Collect all entries as "hostname|timestamp|comment" for sorting by hostname then timestamp
   local entries=()
-  while IFS= read -r uuiddir; do
+  while IFS= read -r hostnamedir; do
     while IFS= read -r name; do
-      local infopath="$uuiddir/$name/$g_infofile"
+      local infopath="$hostnamedir/$name/$g_infofile"
       if [ -f "$infopath" ]; then
         hostname=$(jq -r '.hostname' "$infopath")
         comment=$(jq -r '.comment' "$infopath")

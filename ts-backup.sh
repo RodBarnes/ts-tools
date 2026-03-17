@@ -84,10 +84,10 @@ create_snapshot() {
     fi
 
     # Create info file in the snapshot directory
-    sourcedevice=$(findmnt -n -o SOURCE /)
     uuid=$(blkid -s UUID -o value "$sourcedevice")
     hostname=$(hostname -s)
-    json=$(jq -nc --arg comment "$comment" --arg device "$sourcedevice" --arg uuid "$uuid" --arg hostname "$hostname" '{comment: $comment, device: $device, uuid: $uuid, hostname: $hostname}')
+    machine_id=$(cat /etc/machine-id)
+    json=$(jq -nc --arg comment "$comment" --arg device "$sourcedevice" --arg uuid "$uuid" --arg hostname "$hostname" --arg machine_id "$machine_id" '{comment: $comment, device: $device, uuid: $uuid, hostname: $hostname, machine_id: $machine_id}')
     echo $json > "$path/$name/$g_infofile"
 
     # Done
@@ -182,13 +182,9 @@ if [[ ! -b $backupdevice ]]; then
   exit
 fi
 
-# Resolve source UUID before mounting to build the per-system subdirectory path
+# Resolve source device info before mounting
 sourcedevice=$(findmnt -n -o SOURCE /)
-sourceuuid=$(blkid -s UUID -o value "$sourcedevice")
-if [ -z "$sourceuuid" ]; then
-  printx "Unable to determine UUID of source device '$sourcedevice'."
-  exit
-fi
+sourcehostname=$(hostname -s)
 
 minimum_space=5 # Amount in GB
 snapshotname="$(date +%Y%m%d_%H%M%S)"
@@ -205,8 +201,8 @@ fi
 
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 
-# Ensure the per-system UUID subdirectory exists
-snapshotpath="$g_backuppath/$g_backupdir/$sourceuuid"
+# Ensure the per-system hostname subdirectory exists
+snapshotpath="$g_backuppath/$g_backupdir/$sourcehostname"
 mkdir -p "$snapshotpath"
 
 verify_available_space "$backupdevice" "$g_backuppath" "$minimum_space"

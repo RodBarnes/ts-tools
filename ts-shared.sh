@@ -27,7 +27,7 @@ select_snapshot() {
 
   local snapshots=() comment hostname name count
 
-  # Enumerate all UUID subdirectories, then snapshots within each, sorted by hostname then timestamp
+  # Enumerate all hostname subdirectories, then snapshots within each, sorted by hostname then timestamp
   while IFS= read -r uuiddir; do
     while IFS= read -r backup; do
       local infopath="$uuiddir/$backup/$g_infofile"
