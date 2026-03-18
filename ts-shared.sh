@@ -75,6 +75,7 @@ select_snapshot() {
   count="${#labels[@]}"
   ((count++))
 
+  COLUMNS=1
   select selection in "${labels[@]}" "Cancel"; do
     if [[ "$REPLY" =~ ^[0-9]+$ && "$REPLY" -ge 1 && "$REPLY" -le $count ]]; then
       if [[ "$selection" == "Cancel" ]]; then
