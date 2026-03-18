@@ -62,6 +62,7 @@ validate_boot_config() {
 
   local boot_valid=1
   local validated_bootdev="$bootdev"
+  local yn
 
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 
@@ -122,10 +123,14 @@ validate_boot_config() {
 build_boot() {
   trap 'sudo umount "$restpath/boot/efi" "$restpath/dev/pts" "$restpath/dev" "$restpath/proc" "$restpath/sys" 2>/dev/null' RETURN
 
-  local restdev=$1 restpath=$2 bootdev=$3
+  local restdev=$1
+  local restpath=$2
+  local bootdev=$3
 
-  local osid=$(grep "^ID=" "$restpath/etc/os-release" | cut -d'=' -f2 | tr -d '"')
-  local partno=$(lsblk -no PARTN "$restdev" 2>/dev/null)
+  local osid
+  local partno
+
+  partno=$(lsblk -no PARTN "$restdev" 2>/dev/null)
   if [ -z "$partno" ]; then
       showx "WARNING: Could not determine partition number for '$restdev'; defaulting to 2."
       partno="2"
@@ -159,8 +164,9 @@ build_boot() {
     return 2
   fi
 
-  show "Checking EFI on $bootdev"
   # Check for an existing boot entry
+  show "Checking EFI on $bootdev"
+  osid=$(grep "^ID=" "$restpath/etc/os-release" | cut -d'=' -f2 | tr -d '"')
   efibootmgr | grep -q "$osid" &>> "$g_logfile"
   if ! efibootmgr | grep -q "$osid"; then
     show "Building the UEFI boot entry on $bootdev with an entry for $restdev..."
@@ -189,9 +195,14 @@ build_boot() {
 }
 
 restore_snapshot() {
-  local backpath=$1 name=$2 restpath=$3 restdev=$4
+  local backpath=$1
+  local name=$2
+  local restpath=$3
+  local restdev=$4
 
-  local hostname=$(jq -r '.hostname' "$backpath/$name/$g_infofile")
+  local hostname
+  local excludearg
+  local yn
 
   printx "This will completely OVERWRITE the operating system on '$restdev'."
   readx "Are you sure you want to proceed? (y/N) " yn
@@ -210,6 +221,7 @@ restore_snapshot() {
       fi
     fi
 
+    hostname=$(jq -r '.hostname' "$backpath/$name/$g_infofile")
     show "Restoring '$hostname' $name to '$restdev'..."
     echo "---${FUNCNAME}---" &>> "$g_logfile"
     # Restore the snapshot
@@ -228,12 +240,15 @@ restore_snapshot() {
 }
 
 dryrun_snapshot() {
-  local backpath=$1 name=$2 restpath=$3
+  local backpath=$1
+  local name=$2
+  local restpath=$3
 
-  local hostname=$(jq -r '.hostname' "$backpath/$name/$g_infofile")
+  local hostname
 
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 
+  hostname=$(jq -r '.hostname' "$backpath/$name/$g_infofile")
   echo "Performing dry-run restore of '$hostname' $name to '$restpath'..." &>> "$g_logfile"
   # Do a dry run and record the output
   echo rsync -aAX --dry-run --delete --verbose "--exclude-from=$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"

@@ -13,11 +13,17 @@ show_syntax() {
 }
 
 delete_snapshot() {
-  local path=$1 subpath=$2
+  local path=$1
+  local subpath=$2
+
   local snapshot_dir="$path/$subpath"
   local name="${subpath##*/}"
-  local guid=$(cat /proc/sys/kernel/random/uuid)
-  local empty_dir=$(mktemp -d /tmp/empty.$guid)
+  local guid
+  local empty_dir
+  local yn
+
+  guid=$(cat /proc/sys/kernel/random/uuid)
+  empty_dir=$(mktemp -d /tmp/empty.$guid)
 
   showx "This will completely and IRREVERSIBLY DELETE the snapshot '$name'."
   showx "All other remaining snapshots will stay fully intact and restorable."

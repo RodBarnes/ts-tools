@@ -13,16 +13,21 @@ show_syntax() {
 }
 
 list_snapshots() {
-  local device=$1 path=$2
+  local device=$1
+  local path=$2
 
-  local comment hostname name
+  local comment
+  local hostname
+  local name
   local i=0
+  local entries=()
+  local infopath
+  local hostnamedir
 
   # Collect all entries as "hostname|timestamp|comment" for sorting by hostname then timestamp
-  local entries=()
   while IFS= read -r hostnamedir; do
     while IFS= read -r name; do
-      local infopath="$hostnamedir/$name/$g_infofile"
+      infopath="$hostnamedir/$name/$g_infofile"
       if [ -f "$infopath" ]; then
         hostname=$(jq -r '.hostname' "$infopath")
         comment=$(jq -r '.comment' "$infopath")

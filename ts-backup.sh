@@ -16,7 +16,21 @@ show_syntax() {
 }
 
 verify_available_space() {
-  local device=$1 path=$2 minspace=$3
+  local device=$1
+  local path=$2
+  local minspace=$3
+
+  local line
+  local space
+  local minspace
+  local avail
+  local yn
+  local dev
+  local size
+  local used
+  local avail
+  local pcent
+  local mount
 
   # Check how much space is left
   line=$(df "$path" -BG | sed -n '2p;')
@@ -37,7 +51,23 @@ verify_available_space() {
 }
 
 create_snapshot() {
-  local device=$1 path=$2 name=$3 comment=$4 dry=$5 perm=$6
+  local device=$1
+  local path=$2
+  local name=$3
+  local comment=$4
+  local dry=$5
+  local perm=$6
+
+  local latest
+  local uuid
+  local hostname
+  local machine_id
+  local json
+  local used_before
+  local excludearg
+  local yn
+  local dryrun_flag
+  local sourcedevice
 
   if [[ -n "$perm" ]]; then
     show "The backup device does not support permmissions or ownership."
@@ -45,7 +75,7 @@ create_snapshot() {
   fi
 
   # Get the name of the most recent backup in this system's UUID subdirectory
-  local latest=$(ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}$' | sort -r | sed -n '1p;')
+  latest=$(ls -1 "$path" | grep -E '^[0-9]{8}_[0-9]{6}$' | sort -r | sed -n '1p;')
 
   if [ -f "$g_excludesfile" ]; then
     excludearg="--exclude-from=$g_excludesfile"
@@ -62,7 +92,6 @@ create_snapshot() {
   [ -n "$dry" ] && dryrun_flag="--dry-run" || dryrun_flag=""
 
   # Capture device usage before rsync to calculate actual snapshot size
-  local used_before
   used_before=$(df "$path" --output=used -BK | tail -1 | tr -d 'K')
 
   if [ -n "$latest" ]; then
@@ -84,6 +113,7 @@ create_snapshot() {
     fi
 
     # Create info file in the snapshot directory
+    sourcedevice=$(findmnt -n -o SOURCE /)
     uuid=$(blkid -s UUID -o value "$sourcedevice")
     hostname=$(hostname -s)
     machine_id=$(cat /etc/machine-id)
@@ -98,10 +128,13 @@ create_snapshot() {
 }
 
 check_rsync_perm() {
-  local path=$1 device=$2
+  local path=$1
+  local device=$2
 
-  unset noperm
-  local fstype=$(lsblk --output MOUNTPOINTS,FSTYPE | grep "$path" | tr -s ' ' | cut -d ' ' -f2)
+  local fstype
+  local noperm
+
+  fstype=$(lsblk --output MOUNTPOINTS,FSTYPE | grep "$path" | tr -s ' ' | cut -d ' ' -f2)
   echo "Backup device type is: $fstype" &>> "$g_logfile"
   case "$fstype" in
     "vfat"|"exfat")
@@ -183,7 +216,6 @@ if [[ ! -b $backupdevice ]]; then
 fi
 
 # Resolve source device info before mounting
-sourcedevice=$(findmnt -n -o SOURCE /)
 sourcehostname=$(hostname -s)
 
 minimum_space=5 # Amount in GB

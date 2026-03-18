@@ -23,14 +23,27 @@ get_device() {
 }
 
 select_snapshot() {
-  local device=$1 path=$2
+  local device=$1
+  local path=$2
 
-  local snapshots=() comment hostname name count
+  local snapshots=()
+  local comment
+  local hostname
+  local name
+  local count
+  local hostnamedir
+  local snapshot
+  local infopath
+  local sorted_snapshots=()
+  local entry
+  local labels=()
+  local selection
+  local idx
 
   # Enumerate all hostname subdirectories, then snapshots within each, sorted by hostname then timestamp
   while IFS= read -r hostnamedir; do
-    while IFS= read -r backup; do
-      local infopath="$hostnamedir/$backup/$g_infofile"
+    while IFS= read -r snapshot; do
+      infopath="$hostnamedir/$snapshot/$g_infofile"
       if [ -f "$infopath" ]; then
         hostname=$(jq -r '.hostname' "$infopath")
         comment=$(jq -r '.comment' "$infopath")
@@ -38,7 +51,7 @@ select_snapshot() {
         hostname="unknown"
         comment="<no desc>"
       fi
-      snapshots+=("${hostnamedir##*/}/$backup|$hostname  $backup: $comment")
+      snapshots+=("${hostnamedir##*/}/$snapshot|$hostname  $snapshot: $comment")
     done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
   done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
 
@@ -48,13 +61,11 @@ select_snapshot() {
   fi
 
   # Sort entries by the display portion (hostname first, then timestamp) and rebuild array
-  local sorted_snapshots=()
   while IFS= read -r entry; do
     sorted_snapshots+=("$entry")
   done < <( printf '%s\n' "${snapshots[@]}" | sort -t'|' -k2 )
 
   # Build display-only labels for select
-  local labels=()
   for entry in "${sorted_snapshots[@]}"; do
     labels+=("${entry##*|}")
   done
@@ -64,7 +75,6 @@ select_snapshot() {
   count="${#labels[@]}"
   ((count++))
 
-  COLUMNS=1
   select selection in "${labels[@]}" "Cancel"; do
     if [[ "$REPLY" =~ ^[0-9]+$ && "$REPLY" -ge 1 && "$REPLY" -le $count ]]; then
       if [[ "$selection" == "Cancel" ]]; then
@@ -72,7 +82,7 @@ select_snapshot() {
         break
       else
         # Map selected label back to its uuid/snapshot path token
-        local idx=$(( REPLY - 1 ))
+        idx=$(( REPLY - 1 ))
         name="${sorted_snapshots[$idx]%%|*}"
         break
       fi
