@@ -21,23 +21,21 @@ verify_available_space() {
   local minspace=$3
 
   local line
-  local space
-  local minspace
-  local avail
-  local yn
   local dev
   local size
   local used
   local avail
   local pcent
   local mount
+  local space
+  local yn
 
   # Check how much space is left
   line=$(df "$path" -BG | sed -n '2p;')
   IFS=' ' read dev size used avail pcent mount <<< $line
   space=${avail%G}
   if [[ $space -lt $minspace ]]; then
-    showx "The backupdevice '$device' has less only $avail space left of the total $size."
+    showx "The backup device '$device' has only $avail space left of the total $size."
     read -p "Do you want to proceed? (y/N) " yn
     if [[ $yn != "y" && $yn != "Y" ]]; then
       show "Operation cancelled."
