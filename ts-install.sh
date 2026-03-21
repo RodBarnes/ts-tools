@@ -19,9 +19,13 @@ prog_files=(
   ts-restore.sh
 )
 
+config_files=(
+  ts-excludes
+)
+
 echo "Installing ts-tools..."
 
-sudo -v
+sudo -v || exit 1
 
 echo "Installing library files to $lib_dest..."
 for file in "${lib_files[@]}"; do
@@ -41,6 +45,16 @@ for file in "${prog_files[@]}"; do
   sudo mv "$remote_home/$file" "$sbin_dest/$target"
   if [ $? -ne 0 ]; then
     echo "Error: Failed to install $file to $sbin_dest"
+    exit 1
+  fi
+done
+
+echo "Installing config files to /etc..."
+for file in "${config_files[@]}"; do
+  sudo chown root:root "$remote_home/$file"
+  sudo mv "$remote_home/$file" "/etc/$file"
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to install $file to /etc"
     exit 1
   fi
 done

@@ -18,6 +18,10 @@ prog_files=(
   ts-install.sh
 )
 
+config_files=(
+  ts-excludes
+)
+
 # --------------------
 # ------- MAIN -------
 # --------------------
@@ -44,6 +48,15 @@ done
 
 echo "Copying program files..."
 for file in "${prog_files[@]}"; do
+  scp "$file" "$remote_user@$target:$remote_home/$file"
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to copy $file to $target"
+    exit 1
+  fi
+done
+
+echo "Copying config files..."
+for file in "${config_files[@]}"; do
   scp "$file" "$remote_user@$target:$remote_home/$file"
   if [ $? -ne 0 ]; then
     echo "Error: Failed to copy $file to $target"
