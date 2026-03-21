@@ -1,9 +1,9 @@
 # ts-tools
-A collection of `bash` scripts that emulate TimeShift backups on headless systems.  These are sysadmin tools and should reside in `/usr/local/sbin`.
+A collection of `bash` scripts that emulate TimeShift backups on headless systems.  They are written for bash on debian-based distros.  They may work as is or should be easily modified to work on other distros.
 
-This requires `rsync` and `jq` be installed as well as expecting the `display.sh` and `device.sh` libraries (found in the [tools](https://github.com/RodBarnes/tools) repository) be in `/usr/local/lib`.
+They requires `rsync` and `jq` be installed as well as expecting the `display.sh` and `device.sh` libraries (found in the [tools](https://github.com/RodBarnes/tools) repository) be in `/usr/local/lib`.
 
-These are written for bash on debian-based distros.  They may work as is or should be easily modified to work on other distros.
+To install these tools on a server, run `bash ./ts-deploy.sh <hostname>`.  It will copy the files to the server and install them in   These are sysadmin tools and should reside in `/usr/local/sbin` and `/usr/local/lib`.
 
 NOTE: Yes, TimeShift provides a command line but TimeShift includes all the GUI dependicies even if they aren't required on a headless system.  Plus, this was a fun project.
 
