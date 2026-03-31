@@ -3,7 +3,9 @@ A collection of `bash` scripts that emulate TimeShift backups on headless system
 
 They require `rsync` and `jq` be installed as well as expecting the `display.sh` and `device.sh` libraries (found in the [tools](https://github.com/RodBarnes/tools) repository) be in `/usr/local/lib`.
 
-To install these tools on a server, run `bash ./ts-deploy.sh <hostname>`.  It will copy the files to the server and install them in /usr/local/sbin` and `/usr/local/lib`.
+To install these tools on a server, run `bash ./ts-deploy.sh <hostname>`.  It will copy the files to the server and install them in `/usr/local/sbin` and `/usr/local/lib`.
+
+For all the tools `<backup_device>` can be a device designator (e.g., /dev/sdb6), a UUID, or filesystem LABEL.
 
 NOTE: Yes, TimeShift provides a command line but TimeShift includes all the GUI dependicies even if they aren't required on a headless system.  Plus, this was a fun project.
 
