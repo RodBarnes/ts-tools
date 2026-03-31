@@ -1,7 +1,7 @@
 # ts-tools
 A collection of `bash` scripts that emulate TimeShift backups on headless systems.  They are written for bash on debian-based distros.  They may work as is or should be easily modified to work on other distros.
 
-They require `rsync` and `jq` be installed as well as expecting the `display.sh` and `device.sh` libraries (found in the [tools](https://github.com/RodBarnes/tools) repository) be in `/usr/local/lib`.
+They require `rsync` and `jq` be installed as well as expecting the [display.sh](https://github.com/RodBarnes/tools/blob/main/display.sh) and [device.sh](https://github.com/RodBarnes/tools/blob/main/device.sh) libraries (found in the [tools](https://github.com/RodBarnes/tools) repository) be in `/usr/local/lib`.
 
 To install these tools on a server, run `bash ./ts-deploy.sh <hostname>`.  It will copy the files to the server and install them in `/usr/local/sbin` and `/usr/local/lib`.
 
