@@ -10,6 +10,8 @@ remote_home=/home/rod
 
 lib_files=(
   ts-shared.sh
+  device.sh
+  display.sh
 )
 
 prog_files=(
@@ -26,6 +28,13 @@ config_files=(
 echo "Installing ts-tools..."
 
 sudo -v || exit 1
+
+echo "Installing required packages..."
+sudo apt-get install -y rsync jq
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to install required packages"
+  exit 1
+fi
 
 echo "Installing library files to $lib_dest..."
 for file in "${lib_files[@]}"; do
