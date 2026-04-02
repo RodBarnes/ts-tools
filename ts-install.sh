@@ -29,11 +29,16 @@ echo "Installing ts-tools..."
 
 sudo -v || exit 1
 
-echo "Installing required packages..."
-sudo apt-get install -y rsync jq
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to install required packages"
-  exit 1
+packages=(rsync jq)
+missing=()
+for pkg in "${packages[@]}"; do
+  if ! dpkg -s "$pkg" &>/dev/null; then
+    missing+=("$pkg")
+  fi
+done
+if [[ ${#missing[@]} -gt 0 ]]; then
+  echo "Installing missing packages: ${missing[*]}"
+  sudo apt-get install -y "${missing[@]}" || { echo "Error: Package installation failed"; exit 1; }
 fi
 
 echo "Installing library files to $lib_dest..."

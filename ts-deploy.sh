@@ -6,10 +6,10 @@
 # Where:  <target> is the hostname or IP of the target system.
 
 # Path to the global library files (from the tools repository)
-global_lib_path=~/src/mine/tools
+TOOLS_DIR=~/src/mine/tools
 
 # Global library files required by ts-tools (sourced from tools repository)
-global_lib_files=(
+tools_lib_files=(
   device.sh
   display.sh
 )
@@ -46,9 +46,9 @@ remote_home=/home/$remote_user
 
 echo "Deploying ts-tools to $target..."
 
-echo "Copying global library files..."
-for file in "${global_lib_files[@]}"; do
-  scp "$global_lib_path/$file" "$remote_user@$target:$remote_home/$file"
+echo "Copying tools library files..."
+for file in "${tools_lib_files[@]}"; do
+  scp "$TOOLS_DIR/$file" "$remote_user@$target:$remote_home/$file"
   if [ $? -ne 0 ]; then
     echo "Error: Failed to copy $file to $target"
     exit 1
