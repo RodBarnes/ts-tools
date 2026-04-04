@@ -5,7 +5,7 @@
 source /usr/local/lib/ts-shared.sh
 
 show_syntax() {
-  echo "Restore a snapshot created with ts-backup."
+  echo "Restore a snapshot created with ts-backup; emulates TimeShift."
   echo "Syntax: $(basename $0) <backup_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshotname]"
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually creating the backup."
