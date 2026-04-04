@@ -56,13 +56,7 @@ select_snapshot() {
   done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
 
   if [ ${#snapshots[@]} -eq 0 ]; then
-    # Check for a host name
-    target=${path#*ts/}
-    if [ -n $target ]; then
-      showx "There are no backups on $device for '$target'"
-    else
-      showx "There are no backups on $device"
-    fi
+    showx "There are no backups on $device"
     return
   fi
 
