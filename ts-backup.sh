@@ -5,7 +5,7 @@
 source /usr/local/lib/ts-shared.sh
 
 show_syntax() {
-  echo "Create a TimeShift-like snapshot of the system file excluding those identified in /etc/backup-excludes."
+  echo "Create a TimeShift-like snapshot of the file system excluding those identified in /etc/backup-excludes."
   echo "Syntax: $(basename $0) <backup_device> [-d|--dry-run] [-c|--comment comment]"
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually restoring the snapshot."
