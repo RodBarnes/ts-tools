@@ -10,7 +10,6 @@ show_syntax() {
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually creating the backup."
   echo "        [-g--grub-install boot_device] means to rebuild grub on the specified device; e.g., /dev/sda1."
-  echo "        [-s|--snapshot snapshotname] is the name (timestamp) of the snapshot to restore -- if not present, a selection is presented."
   echo "        [-v|--verbose] will display the output log in process."
   echo "NOTE:   Must be run as sudo."
   exit
@@ -267,11 +266,12 @@ cleanup() {
 
 trap 'cleanup' EXIT
 
+hostname=$(hostname)
 restorepath="/mnt/restore"
 
 # Get the arguments
-arg_short=dvg:s:
-arg_long=dry-run,verbose,grub-install:,snapshot:
+arg_short=dvg:
+arg_long=dry-run,verbose,grub-install:
 arg_opts=$(getopt --options "$arg_short" --long "$arg_long" --name "$0" -- "$@")
 if [ $? != 0 ]; then
   show_syntax
@@ -287,10 +287,6 @@ while true; do
       ;;
     -g|--grub-install)
       bootdevice="$2"
-      shift 2
-      ;;
-    -s|--snapshot)
-      snapshotname="$2"
       shift 2
       ;;
     -v|--verbose)
@@ -323,23 +319,9 @@ fi
 
 mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 
-# If a snapshot name was specified, find which UUID subdir contains it
-if [ -n "$snapshotname" ]; then
-  matched_subpath=$(find "$g_backuppath/$g_backupdir" -mindepth 2 -maxdepth 2 -type d -name "$snapshotname" | head -1)
-  if [ -z "$matched_subpath" ]; then
-    printx "There is no snapshot '$snapshotname' on '$backupdevice'."
-    unset snapshotname
-  else
-    # Convert absolute path to relative uuid/snapshotname form
-    snapshotsubpath="${matched_subpath#$g_backuppath/$g_backupdir/}"
-  fi
-fi
-
-# Since a snapshot was not specified, present a list for selection
-if [ -z "$snapshotname" ]; then
-  # select_snapshot returns "uuid/snapshotname"
-  snapshotsubpath=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
-fi
+# Present a list of snapshots for selection
+# select_snapshot returns "uuid/snapshotname"
+snapshotsubpath=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir/$hostname")
 
 if [ -n "$snapshotsubpath" ]; then
 
