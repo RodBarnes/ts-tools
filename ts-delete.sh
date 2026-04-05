@@ -4,10 +4,13 @@
 
 source /usr/local/lib/ts-shared.sh
 
+VERSION="20260404"
+
 show_syntax() {
   echo "Delete a snapshot created with ts-backup."
   echo "Syntax: $(basename $0) <backup_device>"
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
+  echo "        [-V|--version] will display the version."
   echo "NOTE:   Must be run as sudo."
   exit
 }
@@ -18,10 +21,12 @@ delete_snapshot() {
 
   local snapshot_dir="$path/$subpath"
   local name="${subpath##*/}"
+  local guid
   local empty_dir
   local yn
 
-  empty_dir=$(mktemp -d /tmp/empty.XXXXXXXXXX)
+  guid=$(cat /proc/sys/kernel/random/uuid)
+  empty_dir=$(mktemp -d /tmp/empty.$guid)
 
   showx "This will completely and IRREVERSIBLY DELETE the snapshot '$name'."
   showx "All other remaining snapshots will stay fully intact and restorable."
@@ -62,7 +67,10 @@ cleanup() {
 trap 'cleanup' EXIT
 
 # Get the arguments
-if [ $# -ge 1 ]; then
+if [[ "$1" == "-V" || "$1" == "--version" ]]; then
+  echo "$(basename $0) v$VERSION, ts-shared.sh v$TS_SHARED_VERSION"
+  exit 0
+elif [ $# -ge 1 ]; then
   backupdevice=$(get_device "$1")
 else
   show_syntax

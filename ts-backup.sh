@@ -4,6 +4,8 @@
 
 source /usr/local/lib/ts-shared.sh
 
+VERSION="20260404"
+
 show_syntax() {
   echo "Create a TimeShift-like snapshot of the file system excluding those identified in /etc/backup-excludes."
   echo "Syntax: $(basename $0) <backup_device> [-d|--dry-run] [-c|--comment comment]"
@@ -11,6 +13,7 @@ show_syntax() {
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually restoring the snapshot."
   echo "        [-c|--comment comment] is a quote-bounded comment for the snapshot"
   echo "        [-v|--verbose] will display the output log in process."
+  echo "        [-V|--version] will display the version."
   echo "NOTE:   Must be run as sudo."
   exit
 }
@@ -166,8 +169,8 @@ cleanup() {
 trap 'cleanup' EXIT
 
 # Get the arguments
-arg_short=dvc:
-arg_long=dry-run,verbose,comment:
+arg_short=dvcV
+arg_long=dry-run,verbose,comment:,version
 arg_opts=$(getopt --options "$arg_short" --long "$arg_long" --name "$0" -- "$@")
 if [ $? != 0 ]; then
   show_syntax
@@ -177,6 +180,10 @@ fi
 eval set -- "$arg_opts"
 while true; do
   case "$1" in
+    -V|--version)
+      echo "$(basename $0) v$VERSION, ts-shared.sh v$TS_SHARED_VERSION"
+      exit 0
+      ;;
     -d|--dry-run)
       dryrun=true
       shift

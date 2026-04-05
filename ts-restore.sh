@@ -4,6 +4,8 @@
 
 source /usr/local/lib/ts-shared.sh
 
+VERSION="20260404"
+
 show_syntax() {
   echo "Restore a snapshot created with ts-backup; emulates TimeShift."
   echo "Syntax: $(basename $0) <backup_device> [-d|--dry-run] [-g|--grub-install boot_device] [-s|--snapshot snapshotname]"
@@ -11,6 +13,7 @@ show_syntax() {
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually creating the backup."
   echo "        [-g--grub-install boot_device] means to rebuild grub on the specified device; e.g., /dev/sda1."
   echo "        [-v|--verbose] will display the output log in process."
+  echo "        [-V|--version] will display the version."
   echo "NOTE:   Must be run as sudo."
   exit
 }
@@ -269,8 +272,8 @@ trap 'cleanup' EXIT
 restorepath="/mnt/restore"
 
 # Get the arguments
-arg_short=dvg:
-arg_long=dry-run,verbose,grub-install:,snapshot:
+arg_short=dvg:V
+arg_long=dry-run,verbose,grub-install:,snapshot:,version
 arg_opts=$(getopt --options "$arg_short" --long "$arg_long" --name "$0" -- "$@")
 if [ $? != 0 ]; then
   show_syntax
@@ -280,6 +283,10 @@ fi
 eval set -- "$arg_opts"
 while true; do
   case "$1" in
+    -V|--version)
+      echo "$(basename $0) v$VERSION, ts-shared.sh v$TS_SHARED_VERSION"
+      exit 0
+      ;;
     -d|--dry-run)
       dryrun=true
       shift
