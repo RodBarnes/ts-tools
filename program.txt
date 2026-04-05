@@ -1,4 +1,0 @@
-ts-list
-ts-backup
-ts-delete
-ts-restore
