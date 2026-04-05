@@ -25,6 +25,7 @@ get_device() {
 select_snapshot() {
   local device=$1
   local path=$2
+  local target=$3
 
   local snapshots=()
   local comment
@@ -40,10 +41,10 @@ select_snapshot() {
   local selection
   local idx
 
-  # Enumerate all hostname subdirectories, then snapshots within each, sorted by hostname then timestamp
-  while IFS= read -r hostnamedir; do
+  if [ -n "$target" ]; then
+    # Target specified -- iterate snapshots directly within the hostname directory
     while IFS= read -r snapshot; do
-      infopath="$hostnamedir/$snapshot/$g_infofile"
+      infopath="$path/$target/$snapshot/$g_infofile"
       if [ -f "$infopath" ]; then
         hostname=$(jq -r '.hostname' "$infopath")
         comment=$(jq -r '.comment' "$infopath")
@@ -51,12 +52,31 @@ select_snapshot() {
         hostname="unknown"
         comment="<no desc>"
       fi
-      snapshots+=("${hostnamedir##*/}/$snapshot|$hostname  $snapshot: $comment")
-    done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
-  done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
+      snapshots+=("$target/$snapshot|$hostname  $snapshot: $comment")
+    done < <( find "$path/$target" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
+  else
+    # No target -- enumerate all hostname subdirectories
+    while IFS= read -r hostnamedir; do
+      while IFS= read -r snapshot; do
+        infopath="$hostnamedir/$snapshot/$g_infofile"
+        if [ -f "$infopath" ]; then
+          hostname=$(jq -r '.hostname' "$infopath")
+          comment=$(jq -r '.comment' "$infopath")
+        else
+          hostname="unknown"
+          comment="<no desc>"
+        fi
+        snapshots+=("${hostnamedir##*/}/$snapshot|$hostname  $snapshot: $comment")
+      done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
+    done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
+  fi
 
   if [ ${#snapshots[@]} -eq 0 ]; then
-    showx "There are no backups on $device"
+    if [ -n "$target" ]; then
+      showx "There are no backups on $device for '$target'"
+    else
+      showx "There are no backups on $device"
+    fi
     return
   fi
 
@@ -82,7 +102,6 @@ select_snapshot() {
         echo "Operation cancelled." >&2
         break
       else
-        # Map selected label back to its uuid/snapshot path token
         idx=$(( REPLY - 1 ))
         name="${sorted_snapshots[$idx]%%|*}"
         break
