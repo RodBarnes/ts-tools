@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 
 # Install ts-tools on the local system.
-# Intended to be copied to the target and invoked remotely by ts-deploy.sh.
+# Intended to be copied to the target and invoked remotely by ts-deploy.sh,
+# or run directly on the development system using the --local flag.
 # Must be run as a user with sudo privileges.
 
 lib_dest=/usr/local/lib
 sbin_dest=/usr/local/sbin
-remote_home=/home/rod
+tools_dir=~/src/mine/tools
 
-lib_files=(
+ts_lib_files=(
   ts-shared.sh
+)
+
+tools_lib_files=(
   device.sh
   display.sh
 )
@@ -24,6 +28,21 @@ prog_files=(
 config_files=(
   ts-excludes
 )
+
+# Parse arguments
+local_install=false
+if [[ "$1" == "--local" ]]; then
+  local_install=true
+fi
+
+# Set source directory and file operation based on mode
+if [[ "$local_install" == true ]]; then
+  source_dir=.
+  file_op=cp
+else
+  source_dir=/home/$USER
+  file_op=mv
+fi
 
 echo "Installing ts-tools..."
 
@@ -42,38 +61,52 @@ if [[ ${#missing[@]} -gt 0 ]]; then
 fi
 
 echo "Installing library files to $lib_dest..."
-for file in "${lib_files[@]}"; do
-  sudo chown root:root "$remote_home/$file"
-  sudo mv "$remote_home/$file" "$lib_dest/$file"
+for file in "${ts_lib_files[@]}"; do
+  sudo $file_op "$source_dir/$file" "$lib_dest/$file"
   if [ $? -ne 0 ]; then
     echo "Error: Failed to install $file to $lib_dest"
     exit 1
   fi
+  sudo chown root:root "$lib_dest/$file"
+done
+for file in "${tools_lib_files[@]}"; do
+  if [[ "$local_install" == true ]]; then
+    sudo cp "$tools_dir/$file" "$lib_dest/$file"
+  else
+    sudo $file_op "$source_dir/$file" "$lib_dest/$file"
+  fi
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to install $file to $lib_dest"
+    exit 1
+  fi
+  sudo chown root:root "$lib_dest/$file"
 done
 
 echo "Installing program files to $sbin_dest..."
 for file in "${prog_files[@]}"; do
   target="${file%.sh}"
-  sudo chown root:root "$remote_home/$file"
-  sudo chmod +x "$remote_home/$file"
-  sudo mv "$remote_home/$file" "$sbin_dest/$target"
+  sudo $file_op "$source_dir/$file" "$sbin_dest/$target"
   if [ $? -ne 0 ]; then
     echo "Error: Failed to install $file to $sbin_dest"
     exit 1
   fi
+  sudo chown root:root "$sbin_dest/$target"
+  sudo chmod +x "$sbin_dest/$target"
 done
 
 echo "Installing config files to /etc..."
 for file in "${config_files[@]}"; do
-  sudo chown root:root "$remote_home/$file"
-  sudo mv "$remote_home/$file" "/etc/$file"
+  sudo $file_op "$source_dir/$file" "/etc/$file"
   if [ $? -ne 0 ]; then
     echo "Error: Failed to install $file to /etc"
     exit 1
   fi
+  sudo chown root:root "/etc/$file"
 done
 
-echo "Cleaning up..."
-rm -f "$remote_home/ts-install.sh"
+if [[ "$local_install" == false ]]; then
+  echo "Cleaning up..."
+  rm -f "$source_dir/ts-install.sh"
+fi
 
 echo "✅ ts-tools installation complete."
