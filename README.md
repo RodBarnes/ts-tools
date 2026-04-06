@@ -5,7 +5,7 @@ A collection of `bash` scripts that emulate TimeShift backups on headless system
 ### Installation
 To install these tools on a server, run `bash ./ts-deploy.sh <hostname>`.  It will copy the files to the server and install them in `/usr/local/sbin` and `/usr/local/lib`.  It will also install the required dependencies  `rsync` and `jq` and the [display.sh](https://github.com/RodBarnes/tools/blob/main/display.sh) and [device.sh](https://github.com/RodBarnes/tools/blob/main/device.sh) libraries (found in the [tools](https://github.com/RodBarnes/tools) repository).
 
-To install on the local (development) system, run `bash ./ts-install.sh --local`.
+To install on the local system, run `bash ./ts-install.sh --local`.
 
 For all the tools `<backup_device>` can be a device designator (e.g., /dev/sdb6), a UUID, or filesystem LABEL.
 
