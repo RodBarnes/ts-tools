@@ -4,7 +4,7 @@
 
 source /usr/local/lib/ts-shared.sh
 
-VERSION="20260404"
+VERSION="20260411"
 
 show_syntax() {
   echo "Delete a snapshot created with ts-backup."
@@ -25,8 +25,7 @@ delete_snapshot() {
   local empty_dir
   local yn
 
-  guid=$(cat /proc/sys/kernel/random/uuid)
-  empty_dir=$(mktemp -d /tmp/empty.$guid)
+  empty_dir=$(mktemp -d /tmp/empty.XXXXXX)
 
   showx "This will completely and IRREVERSIBLY DELETE the snapshot '$name'."
   showx "All other remaining snapshots will stay fully intact and restorable."
