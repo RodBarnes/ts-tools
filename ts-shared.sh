@@ -5,13 +5,14 @@
 source /usr/local/lib/display.sh
 source /usr/local/lib/device.sh
 
-TS_SHARED_VERSION="20260404"
+TS_SHARED_VERSION="20260411"
 
 g_infofile=info.json
 g_backuppath=/mnt/backup
 g_backupdir="ts"
 g_excludesfile="/etc/ts-excludes"
 g_bootfile="grubx64.efi"  # Default for non-secure boot
+g_snapshots=()            # Populated by collect_snapshots as needed
 
 verify_sudo() {
   if [[ "$EUID" != 0 ]]; then
@@ -24,24 +25,22 @@ get_device() {
   echo "/dev/$(lsblk -ln -o NAME,UUID,PARTUUID,LABEL | grep "${1#/dev/}" | tr -s ' ' | cut -d ' ' -f1)"
 }
 
-select_snapshot() {
-  local device=$1
-  local path=$2
-  local target=$3
+# Populate g_snapshots with all snapshots found under path, optionally filtered to target hostname.
+# Each entry is "hostname/snapshotname|hostname  snapshotname: comment"
+# Entries are sorted by hostname then snapshotname.
+collect_snapshots() {
+  local path=$1
+  local target=$2
 
-  local snapshots=()
-  local comment
   local hostname
-  local name
-  local count
-  local hostnamedir
+  local comment
   local snapshot
   local infopath
-  local sorted_snapshots=()
+  local hostnamedir
+  local raw=()
   local entry
-  local labels=()
-  local selection
-  local idx
+
+  g_snapshots=()
 
   if [ -n "$target" ]; then
     # Target specified -- iterate snapshots directly within the hostname directory
@@ -54,7 +53,7 @@ select_snapshot() {
         hostname="unknown"
         comment="<no desc>"
       fi
-      snapshots+=("$target/$snapshot|$hostname  $snapshot: $comment")
+      raw+=("$target/$snapshot|$hostname  $snapshot: $comment")
     done < <( find "$path/$target" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
   else
     # No target -- enumerate all hostname subdirectories
@@ -68,12 +67,32 @@ select_snapshot() {
           hostname="unknown"
           comment="<no desc>"
         fi
-        snapshots+=("${hostnamedir##*/}/$snapshot|$hostname  $snapshot: $comment")
+        raw+=("${hostnamedir##*/}/$snapshot|$hostname  $snapshot: $comment")
       done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
     done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
   fi
 
-  if [ ${#snapshots[@]} -eq 0 ]; then
+  # Sort by the display portion (hostname first, then timestamp)
+  while IFS= read -r entry; do
+    g_snapshots+=("$entry")
+  done < <( printf '%s\n' "${raw[@]}" | sort -t'|' -k2 )
+}
+
+select_snapshot() {
+  local device=$1
+  local path=$2
+  local target=$3
+
+  local count
+  local entry
+  local labels=()
+  local selection
+  local name
+  local idx
+
+  collect_snapshots "$path" "$target"
+
+  if [ ${#g_snapshots[@]} -eq 0 ]; then
     if [ -n "$target" ]; then
       showx "There are no backups on $device for '$target'"
     else
@@ -82,13 +101,8 @@ select_snapshot() {
     return
   fi
 
-  # Sort entries by the display portion (hostname first, then timestamp) and rebuild array
-  while IFS= read -r entry; do
-    sorted_snapshots+=("$entry")
-  done < <( printf '%s\n' "${snapshots[@]}" | sort -t'|' -k2 )
-
   # Build display-only labels for select
-  for entry in "${sorted_snapshots[@]}"; do
+  for entry in "${g_snapshots[@]}"; do
     labels+=("${entry##*|}")
   done
 
@@ -105,7 +119,7 @@ select_snapshot() {
         break
       else
         idx=$(( REPLY - 1 ))
-        name="${sorted_snapshots[$idx]%%|*}"
+        name="${g_snapshots[$idx]%%|*}"
         break
       fi
     else

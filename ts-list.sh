@@ -4,7 +4,7 @@
 
 source /usr/local/lib/ts-shared.sh
 
-VERSION="20260404"
+VERSION="20260411"
 
 show_syntax() {
   echo "List all snapshots created by ts-backup."
@@ -19,30 +19,12 @@ list_snapshots() {
   local device=$1
   local path=$2
 
-  local comment
-  local hostname
-  local name
-  local i=0
-  local entries=()
-  local infopath
-  local hostnamedir
+  local entry
+  local label
 
-  # Collect all entries as "hostname|timestamp|comment" for sorting by hostname then timestamp
-  while IFS= read -r hostnamedir; do
-    while IFS= read -r name; do
-      infopath="$hostnamedir/$name/$g_infofile"
-      if [ -f "$infopath" ]; then
-        hostname=$(jq -r '.hostname' "$infopath")
-        comment=$(jq -r '.comment' "$infopath")
-      else
-        hostname="unknown"
-        comment="<no desc>"
-      fi
-      entries+=("$hostname|$name|$comment")
-    done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
-  done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
+  collect_snapshots "$path"
 
-  if [ ${#entries[@]} -eq 0 ]; then
+  if [ ${#g_snapshots[@]} -eq 0 ]; then
     showx "There are no backups on $device"
     return
   fi
@@ -51,11 +33,10 @@ list_snapshots() {
 
   show "Snapshot files:"
 
-  # Sort by hostname then timestamp and display
-  while IFS='|' read -r hostname name comment; do
-    show "$hostname  $name: $comment"
-    ((i++))
-  done < <( printf '%s\n' "${entries[@]}" | sort )
+  for entry in "${g_snapshots[@]}"; do
+    label="${entry##*|}"
+    show "$label"
+  done
 }
 
 cleanup() {
