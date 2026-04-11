@@ -32,7 +32,6 @@ collect_snapshots() {
   local path=$1
   local target=$2
 
-  local hostname
   local comment
   local snapshot
   local infopath
@@ -47,13 +46,11 @@ collect_snapshots() {
     while IFS= read -r snapshot; do
       infopath="$path/$target/$snapshot/$g_infofile"
       if [ -f "$infopath" ]; then
-        hostname=$(jq -r '.hostname' "$infopath")
         comment=$(jq -r '.comment' "$infopath")
       else
-        hostname="unknown"
         comment="<no desc>"
       fi
-      raw+=("$target/$snapshot|$hostname  $snapshot: $comment")
+      raw+=("$target/$snapshot|$target  $snapshot: $comment")
     done < <( find "$path/$target" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
   else
     # No target -- enumerate all hostname subdirectories
@@ -61,13 +58,11 @@ collect_snapshots() {
       while IFS= read -r snapshot; do
         infopath="$hostnamedir/$snapshot/$g_infofile"
         if [ -f "$infopath" ]; then
-          hostname=$(jq -r '.hostname' "$infopath")
           comment=$(jq -r '.comment' "$infopath")
         else
-          hostname="unknown"
           comment="<no desc>"
         fi
-        raw+=("${hostnamedir##*/}/$snapshot|$hostname  $snapshot: $comment")
+        raw+=("${hostnamedir##*/}/$snapshot|${hostnamedir##*/}  $snapshot: $comment")
       done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
     done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
   fi

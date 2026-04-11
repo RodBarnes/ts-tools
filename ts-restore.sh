@@ -201,8 +201,8 @@ restore_snapshot() {
   local name=$2
   local restpath=$3
   local restdev=$4
+  local systemname=$5
 
-  local hostname
   local excludearg
   local yn
 
@@ -223,8 +223,7 @@ restore_snapshot() {
       fi
     fi
 
-    hostname=$(jq -r '.hostname' "$backpath/$name/$g_infofile")
-    show "Restoring '$hostname' $name to '$restdev'..."
+    show "Restoring '$systemname' $name to '$restdev'..."
     echo "---${FUNCNAME}---" &>> "$g_logfile"
     # Restore the snapshot
     echo "rsync -aAX --delete --verbose --exclude-from=\"$g_excludesfile\" \"$backpath/$name/\" \"$restpath/\"" &>> "$g_logfile"
@@ -245,13 +244,11 @@ dryrun_snapshot() {
   local backpath=$1
   local name=$2
   local restpath=$3
-
-  local hostname
+  local systemname=$4
 
   echo "---${FUNCNAME}---" &>> "$g_logfile"
 
-  hostname=$(jq -r '.hostname' "$backpath/$name/$g_infofile")
-  echo "Performing dry-run restore of '$hostname' $name to '$restpath'..." &>> "$g_logfile"
+  echo "Performing dry-run restore of '$systemname' $name to '$restpath'..." &>> "$g_logfile"
   # Do a dry run and record the output
   echo rsync -aAX --dry-run --delete --verbose "--exclude-from=$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
   rsync -aAX --dry-run --delete --verbose "--exclude-from=$g_excludesfile" "$backpath/$name/" "$restpath/" &>> "$g_logfile"
@@ -362,6 +359,9 @@ if [ -n "$snapshotsubpath" ]; then
     exit
   fi
 
+  # Derive system name from the snapshot path (directory name)
+  systemname="${snapshotsubpath%/*}"
+
   mount_device_at_path "$restoredevice" "$restorepath"
 
   # Initialize the log file
@@ -374,13 +374,11 @@ if [ -n "$snapshotsubpath" ]; then
     tail_pid=$!
   fi
 
-  hostname=$(jq -r '.hostname' "$infofile")
-
   # Warn if this backup was made on a different machine
   backup_machine_id=$(jq -r '.machine_id' "$infofile")
   current_machine_id=$(cat /etc/machine-id)
   if [ "$backup_machine_id" != "$current_machine_id" ]; then
-    showx "WARNING: This backup was made on a different machine (hostname: $hostname)."
+    showx "WARNING: This backup was made on a different machine (system name: $systemname)."
     showx "Restoring it to this machine may produce an unbootable or misconfigured system."
     readx "Do you want to proceed anyway? (y/N)" yn
     if [[ $yn != "y" && $yn != "Y" ]]; then
@@ -390,7 +388,7 @@ if [ -n "$snapshotsubpath" ]; then
   fi
 
   if [ -z "$dryrun" ]; then
-    restore_snapshot "$snapshotpath" "$snapshotname" "$restorepath" "$restoredevice"
+    restore_snapshot "$snapshotpath" "$snapshotname" "$restorepath" "$restoredevice" "$systemname"
 
     get_bootfile "$restorepath"
 
@@ -408,11 +406,11 @@ if [ -n "$snapshotsubpath" ]; then
     fi
 
     # Done
-    echo "✅ Restore complete: '$hostname' $snapshotname"
+    echo "✅ Restore complete: '$systemname' $snapshotname"
     echo "The system may now be rebooted into the restored partition."
   else
-    echo "Performing dry-run restore of '$hostname' $snapshotname to '$restoredevice'..."
-    dryrun_snapshot "$snapshotpath" "$snapshotname" "$restorepath"
+    echo "Performing dry-run restore of '$systemname' $snapshotname to '$restoredevice'..."
+    dryrun_snapshot "$snapshotpath" "$snapshotname" "$restorepath" "$systemname"
   fi
   echo "Details of the operation can be viewed in the file '$g_logfile'"
 fi

@@ -4,12 +4,13 @@
 
 source /usr/local/lib/ts-shared.sh
 
-VERSION="20260408"
+VERSION="20260411"
 
 show_syntax() {
   echo "Create a TimeShift-like snapshot of the file system excluding those identified in /etc/backup-excludes."
-  echo "Syntax: $(basename $0) <backup_device> [-d|--dry-run] [-c|--comment comment]"
+  echo "Syntax: $(basename $0) <backup_device> [system_name] [-d|--dry-run] [-c|--comment comment]"
   echo "Where:  <backup_device> can be a device designator (e.g., /dev/sdb6), a UUID, filesystem LABEL, or partition UUID"
+  echo "        [system_name] is the name used to identify this system's backups; defaults to hostname if not provided"
   echo "        [-d|--dry-run] means to do a 'dry-run' test without actually restoring the snapshot."
   echo "        [-c|--comment comment] is a quote-bounded comment for the snapshot"
   echo "        [-v|--verbose] will display the output log in process."
@@ -61,7 +62,6 @@ create_snapshot() {
 
   local latest
   local uuid
-  local hostname
   local machine_id
   local json
   local used_before
@@ -116,9 +116,8 @@ create_snapshot() {
     # Create info file in the snapshot directory
     sourcedevice=$(findmnt -n -o SOURCE /)
     uuid=$(blkid -s UUID -o value "$sourcedevice")
-    hostname=$(hostname -s)
     machine_id=$(cat /etc/machine-id)
-    json=$(jq -nc --arg comment "$comment" --arg device "$sourcedevice" --arg uuid "$uuid" --arg hostname "$hostname" --arg machine_id "$machine_id" '{comment: $comment, device: $device, uuid: $uuid, hostname: $hostname, machine_id: $machine_id}')
+    json=$(jq -nc --arg comment "$comment" --arg device "$sourcedevice" --arg uuid "$uuid" --arg machine_id "$machine_id" '{comment: $comment, device: $device, uuid: $uuid, machine_id: $machine_id}')
     echo $json > "$path/$name/$g_infofile"
 
     # Done
@@ -169,7 +168,7 @@ cleanup() {
 trap 'cleanup' EXIT
 
 # Get the arguments
-arg_short=dvc:V
+arg_short=dvcV
 arg_long=dry-run,verbose,comment:,version
 arg_opts=$(getopt --options "$arg_short" --long "$arg_long" --name "$0" -- "$@")
 if [ $? != 0 ]; then
@@ -220,8 +219,18 @@ if [[ ! -b $backupdevice ]]; then
   exit
 fi
 
+if [ $# -ge 2 ]; then
+  systemname="$2"
+else
+  default_name=$(hostname -s)
+  readx "Enter a name for this system's backups [$default_name]:" systemname
+  if [ -z "$systemname" ]; then
+    systemname="$default_name"
+  fi
+fi
+
 # Resolve source device info before mounting
-sourcehostname=$(hostname -s)
+sourcehostname="$systemname"
 
 minimum_space=5 # Amount in GB
 snapshotname="$(date +%Y%m%d_%H%M%S)"
