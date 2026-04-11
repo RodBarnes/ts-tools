@@ -4,7 +4,7 @@
 
 source /usr/local/lib/ts-shared.sh
 
-VERSION="20260404"
+VERSION="20260411"
 
 show_syntax() {
   echo "Restore a snapshot created with ts-backup; emulates TimeShift."
@@ -340,7 +340,7 @@ fi
 # Since a snapshot was not specified, present a list for selection
 if [ -z "$snapshotname" ]; then
   # select_snapshot returns "uuid/snapshotname"
-  snapshotsubpath=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir" "$(hostname -s)")
+  snapshotsubpath=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
 fi
 
 if [ -n "$snapshotsubpath" ]; then
