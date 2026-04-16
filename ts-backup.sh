@@ -4,7 +4,7 @@
 
 source /usr/local/lib/ts-shared.sh
 
-VERSION="20260411"
+VERSION="20260415"
 
 show_syntax() {
   echo "Create a TimeShift-like snapshot of the file system excluding those identified in /etc/backup-excludes."
@@ -168,7 +168,7 @@ cleanup() {
 trap 'cleanup' EXIT
 
 # Get the arguments
-arg_short=dvcV
+arg_short=dvc:V
 arg_long=dry-run,verbose,comment:,version
 arg_opts=$(getopt --options "$arg_short" --long "$arg_long" --name "$0" -- "$@")
 if [ $? != 0 ]; then
