@@ -23,7 +23,3 @@ for file in "${files[@]}"; do
   fi
 done
 
-if git diff --cached --name-only | grep -q "^ts-shared.sh$"; then
-  sed -i "s/^TS_SHARED_VERSION=\"[0-9]\{8\}\"/TS_SHARED_VERSION=\"$today\"/" ts-shared.sh
-  git add ts-shared.sh
-fi

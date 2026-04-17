@@ -5,7 +5,7 @@
 source /usr/local/lib/display.sh
 source /usr/local/lib/device.sh
 
-TS_SHARED_VERSION="20260411"
+VERSION="20260411"
 
 g_infofile=info.json
 g_backuppath=/mnt/backup
