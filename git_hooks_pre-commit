@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # Git pre-commit hook for ts-tools
-# Automatically updates VERSION in any staged script file, and
-# TS_SHARED_VERSION in ts-shared.sh, to today's date (YYYYMMDD).
+# Automatically updates VERSION in any staged script file
+# to today's date (YYYYMMDD).
 #
 # Install: cp ts-tools-pre-commit .git/hooks/pre-commit
 #          chmod +x .git/hooks/pre-commit
@@ -14,6 +14,7 @@ files=(
   ts-delete.sh
   ts-list.sh
   ts-restore.sh
+  ts-shared.sh
 )
 
 for file in "${files[@]}"; do
