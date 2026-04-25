@@ -5,7 +5,7 @@
 source /usr/local/lib/display.sh
 source /usr/local/lib/device.sh
 
-VERSION="20260416"
+VERSION="20260425"
 
 g_infofile=info.json
 g_backuppath=/mnt/backup
@@ -25,12 +25,11 @@ get_device() {
   echo "/dev/$(lsblk -ln -o NAME,UUID,PARTUUID,LABEL | grep "${1#/dev/}" | tr -s ' ' | cut -d ' ' -f1)"
 }
 
-# Populate g_snapshots with all snapshots found under path, optionally filtered to target hostname.
-# Each entry is "hostname/snapshotname|hostname  snapshotname: comment"
+# Populate g_snapshots with all snapshots found under path.
+# Each entry is "hostname/snapshotname|comment"
 # Entries are sorted by hostname then snapshotname.
 collect_snapshots() {
   local path=$1
-  local target=$2
 
   local comment
   local snapshot
@@ -41,84 +40,114 @@ collect_snapshots() {
 
   g_snapshots=()
 
-  if [ -n "$target" ]; then
-    # Target specified -- iterate snapshots directly within the hostname directory
+  while IFS= read -r hostnamedir; do
     while IFS= read -r snapshot; do
-      infopath="$path/$target/$snapshot/$g_infofile"
+      infopath="$hostnamedir/$snapshot/$g_infofile"
       if [ -f "$infopath" ]; then
         comment=$(jq -r '.comment' "$infopath")
       else
         comment="<no desc>"
       fi
-      raw+=("$target/$snapshot|$target  $snapshot: $comment")
-    done < <( find "$path/$target" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
-  else
-    # No target -- enumerate all hostname subdirectories
-    while IFS= read -r hostnamedir; do
-      while IFS= read -r snapshot; do
-        infopath="$hostnamedir/$snapshot/$g_infofile"
-        if [ -f "$infopath" ]; then
-          comment=$(jq -r '.comment' "$infopath")
-        else
-          comment="<no desc>"
-        fi
-        raw+=("${hostnamedir##*/}/$snapshot|${hostnamedir##*/}  $snapshot: $comment")
-      done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
-    done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
-  fi
+      raw+=("${hostnamedir##*/}/$snapshot|$comment")
+    done < <( find "$hostnamedir" -mindepth 1 -maxdepth 1 -type d | xargs -I{} basename {} | grep -E '^[0-9]{8}_[0-9]{6}$' | sort )
+  done < <( find "$path" -mindepth 1 -maxdepth 1 -type d | sort )
 
-  # Sort by the display portion (hostname first, then timestamp)
+  # Sort by hostname then snapshotname (both are in the key portion before |)
   while IFS= read -r entry; do
     g_snapshots+=("$entry")
-  done < <( printf '%s\n' "${raw[@]}" | sort -t'|' -k2 )
+  done < <( printf '%s\n' "${raw[@]}" | sort -t'|' -k1 )
+}
+
+# Print a single formatted snapshot line to stderr.
+# With prefix="": ts-list style   — name  timestamp  description
+# With prefix="N) ": ts-restore/delete style — N)  name  timestamp  description
+# Column widths: name=8, timestamp=15, description fills to COLUMNS.
+format_snapshot_line() {
+  local key=$1      # hostname/snapshotname
+  local comment=$2
+  local prefix=$3   # e.g. " 1)  " or "" for ts-list
+
+  local sysname
+  local snapshot
+  local desc_width
+  local truncated
+
+  sysname="${key%/*}"
+  snapshot="${key##*/}"
+
+  if [ -n "$prefix" ]; then
+    # 4 (num field) + 8 (name) + 2 (gap) + 15 (timestamp) + 2 (gap) = 31
+    desc_width=$(( COLUMNS - 31 ))
+  else
+    # 8 (name) + 2 (gap) + 15 (timestamp) + 2 (gap) = 27
+    desc_width=$(( COLUMNS - 27 ))
+  fi
+
+  # Guard against very narrow terminals
+  if [ "$desc_width" -lt 10 ]; then
+    desc_width=10
+  fi
+
+  # Truncate comment if needed
+  if [ "${#comment}" -gt "$desc_width" ]; then
+    truncated="${comment:0:$(( desc_width - 3 ))}..."
+  else
+    truncated="$comment"
+  fi
+
+  printf "%s${WHITE}%-8s${NOCOLOR}  ${LTCYAN}%s${NOCOLOR}  ${YELLOW}%s${NOCOLOR}\n" \
+    "$prefix" "$sysname" "$snapshot" "$truncated" >&2
 }
 
 select_snapshot() {
   local device=$1
   local path=$2
-  local target=$3
 
   local count
   local entry
-  local labels=()
-  local selection
-  local name
+  local key
+  local comment
   local idx
+  local reply
+  local name
 
-  collect_snapshots "$path" "$target"
+  collect_snapshots "$path"
 
   if [ ${#g_snapshots[@]} -eq 0 ]; then
-    if [ -n "$target" ]; then
-      showx "There are no backups on $device for '$target'"
-    else
-      showx "There are no backups on $device"
-    fi
+    showx "There are no backups on $device"
     return
   fi
 
-  # Build display-only labels for select
+  count="${#g_snapshots[@]}"
+  local cancel=$(( count + 1 ))
+
+  show ""
+
+  idx=0
   for entry in "${g_snapshots[@]}"; do
-    labels+=("${entry##*|}")
+    key="${entry%%|*}"
+    comment="${entry##*|}"
+    idx=$(( idx + 1 ))
+    format_snapshot_line "$key" "$comment" "$(printf '%2d)  ' $idx)"
   done
 
-  show "Snapshot files..."
+  printf "%s\n" "$cancel)  Cancel" >&2
+  show ""
 
-  count="${#labels[@]}"
-  ((count++))
-
-  COLUMNS=1
-  select selection in "${labels[@]}" "Cancel"; do
-    if [[ "$REPLY" =~ ^[0-9]+$ && "$REPLY" -ge 1 && "$REPLY" -le $count ]]; then
-      if [[ "$selection" == "Cancel" ]]; then
-        echo "Operation cancelled." >&2
+  while true; do
+    printf "${YELLOW}Select [1-$cancel]:${NOCOLOR} " >&2
+    read -r reply
+    if [[ "$reply" =~ ^[0-9]+$ && "$reply" -ge 1 && "$reply" -le "$cancel" ]]; then
+      if [ "$reply" -eq "$cancel" ]; then
+        show "Operation cancelled."
+        name=""
         break
       else
-        idx=$(( REPLY - 1 ))
-        name="${g_snapshots[$idx]%%|*}"
+        name="${g_snapshots[$(( reply - 1 ))]%%|*}"
         break
       fi
     else
-      showx "Invalid selection. Please enter a number between 1 and $count."
+      showx "Invalid selection. Please enter a number between 1 and $cancel."
     fi
   done
 

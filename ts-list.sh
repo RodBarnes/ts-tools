@@ -4,7 +4,7 @@
 
 source /usr/local/lib/ts-shared.sh
 
-VERSION="20260411"
+VERSION="20260425"
 
 show_syntax() {
   echo "List all snapshots created by ts-backup."
@@ -20,7 +20,8 @@ list_snapshots() {
   local path=$2
 
   local entry
-  local label
+  local key
+  local comment
 
   collect_snapshots "$path"
 
@@ -30,12 +31,12 @@ list_snapshots() {
   fi
 
   show_device_space "$device"
-
-  show "Snapshot files:"
+  show ""
 
   for entry in "${g_snapshots[@]}"; do
-    label="${entry##*|}"
-    show "$label"
+    key="${entry%%|*}"
+    comment="${entry##*|}"
+    format_snapshot_line "$key" "$comment" ""
   done
 }
 

@@ -4,7 +4,7 @@
 
 source /usr/local/lib/ts-shared.sh
 
-VERSION="20260411"
+VERSION="20260425"
 
 show_syntax() {
   echo "Delete a snapshot created with ts-backup."
@@ -86,7 +86,7 @@ mount_device_at_path "$backupdevice" "$g_backuppath" "$g_backupdir"
 show_device_space "$backupdevice"
 
 while true; do
-  # select_snapshot returns "uuid/snapshotname"
+  # select_snapshot returns "hostname/snapshotname"
   snapshotsubpath=$(select_snapshot "$backupdevice" "$g_backuppath/$g_backupdir")
   if [ -n "$snapshotsubpath" ]; then
     delete_snapshot "$g_backuppath/$g_backupdir" "$snapshotsubpath"
