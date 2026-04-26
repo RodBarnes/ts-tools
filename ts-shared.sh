@@ -131,7 +131,7 @@ select_snapshot() {
     format_snapshot_line "$key" "$comment" "$(printf '%2d)  ' $idx)"
   done
 
-  printf "%s\n" "$cancel)  Cancel" >&2
+  printf "%2d)  Cancel\n" "$cancel" >&2
   show ""
 
   while true; do
