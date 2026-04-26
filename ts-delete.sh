@@ -3,6 +3,7 @@
 # Delete ts-backups
 
 source /usr/local/lib/ts-shared.sh
+LIB_VERSION="$VERSION"
 
 VERSION="20260425"
 
@@ -66,7 +67,7 @@ trap 'cleanup' EXIT
 
 # Get the arguments
 if [[ "$1" == "-V" || "$1" == "--version" ]]; then
-  echo "$(basename $0) v$VERSION, ts-shared.sh v$TS_SHARED_VERSION"
+  echo "$(basename $0) v$VERSION, ts-shared.sh v$LIB_VERSION"
   exit 0
 elif [ $# -ge 1 ]; then
   backupdevice=$(get_device "$1")

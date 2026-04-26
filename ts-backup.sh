@@ -3,8 +3,9 @@
 # Create a snapshot using rsync command as done by TimeShift.
 
 source /usr/local/lib/ts-shared.sh
+LIB_VERSION="$VERSION"
 
-VERSION="20260415"
+VERSION="20260425"
 
 show_syntax() {
   echo "Create a TimeShift-like snapshot of the file system excluding those identified in /etc/backup-excludes."
@@ -180,7 +181,7 @@ eval set -- "$arg_opts"
 while true; do
   case "$1" in
     -V|--version)
-      echo "$(basename $0) v$VERSION, ts-shared.sh v$TS_SHARED_VERSION"
+      echo "$(basename $0) v$VERSION, ts-shared.sh v$LIB_VERSION"
       exit 0
       ;;
     -d|--dry-run)
